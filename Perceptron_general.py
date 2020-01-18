@@ -29,12 +29,19 @@ class Perceptron():
     
     def __init__(self,inputs,targets,neurons_structure):
         
+        #import numpy
+        
         self.neurons_struct = neurons_structure
         self.no_layers = len(neurons_structure)
-        #self.inputs = inputs
-        self.targets = targets
-        self.no_inputs = 1#inputs[0]
-        self.inputs = inputs.reshape(-1,self.no_inputs)
+        
+        if type(inputs) == np.ndarray:
+            self.inputs = inputs
+            self.targets = targets
+            self.no_inputs = inputs[0]
+        else:
+            self.no_inputs = 1
+            self.inputs = inputs.reshape(-1,self.no_inputs)
+            self.targets = targets.reshape(-1,self.no_inputs)
         
         self.all_weights = []
         i_prevlayer = 0
@@ -103,4 +110,5 @@ if __name__ == "__main__":
     main(x, y, (3,2,1) )
     print("--- %s seconds ---" % (time.time() - start_time))
     
+
 
