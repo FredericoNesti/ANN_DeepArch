@@ -63,45 +63,25 @@ class Perceptron():
         self.Forward_step()
         return Activation_Output(self.all_signals[-1])
     
-    '''
-    def RUN(self,IN,OUT):
-    
-        ANN = Perceptron(IN,OUT, self.neurons_struct )
-    
-        y_til = np.array(list(map(Perceptron, IN,OUT)))
-        ANN.Output()
-
-        plt.figure()
-        plt.scatter(IN, OUT,color='blue')
-
-        plt.plot(IN, y_til,color='red')
-        print(y_til)
-        plt.show()
-    '''
-        
     #def Functional_Error():
         
     #def Backprop_train():
    
 # In[3]:
-def main(pair):
+def main(IN,OUT,neuron_topol):
     
-    ANN = Perceptron(IN, OUT, (3,2,1) )
+    #ANN = Perceptron(IN, OUT, (3,2,1) )
     
-    y_list
-    
-    for i,j in zip(IN,OUT):
-    
-    np.array(list(map(Perceptron, IN, OUT)))
-    y_til = ANN.Output()
-
     plt.figure()
-    plt.scatter(IN, OUT,color='blue')
-
-    plt.plot(IN, y_til,color='red')
-    print(y_til)
+    y_til = np.array(IN.shape[0])
+    for pos,in1,out1 in enumerate(zip(IN,OUT)):
+        Net = Perceptron(in1, out1, neuron_topol)
+        y_til[pos] = Net.Output()        
+        plt.scatter(in1, out1,color='blue')
+        plt.plot(in1, y_til[pos],color='red')
+    #np.array(list(map(Perceptron, IN, OUT)))
     plt.show()
-    
+
 # In[4]:
 if __name__ == "__main__":
     import time
@@ -109,3 +89,4 @@ if __name__ == "__main__":
     main(x, y, (3,2,1) )
     print("--- %s seconds ---" % (time.time() - start_time))
     
+
