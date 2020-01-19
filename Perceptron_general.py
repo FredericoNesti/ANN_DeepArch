@@ -29,11 +29,19 @@ class Perceptron():
     
     def __init__(self,inputs,targets,neurons_structure):
         
+        #import numpy
+        
         self.neurons_struct = neurons_structure
         self.no_layers = len(neurons_structure)
-        self.inputs = inputs
-        self.targets = targets        
-        self.no_inputs = inputs.shape[0]
+        
+        if type(inputs) == np.ndarray:
+            self.inputs = inputs
+            self.targets = targets
+            self.no_inputs = inputs[0]
+        else:
+            self.no_inputs = 1
+            self.inputs = inputs.reshape(-1,self.no_inputs)
+            self.targets = targets.reshape(-1,self.no_inputs)
         
         self.all_weights = []
         i_prevlayer = 0
@@ -72,13 +80,26 @@ def main(IN,OUT,neuron_topol):
     
     #ANN = Perceptron(IN, OUT, (3,2,1) )
     
-    plt.figure()
-    y_til = np.array(IN.shape[0])
-    for pos,in1,out1 in enumerate(zip(IN,OUT)):
+    y_til = np.zeros((IN.shape[0]))
+    
+    #print(IN.shape[0])
+    #print('checkpoint')
+    #print(y_til.shape)
+    
+    for pos,(in1,out1) in enumerate(zip(IN,OUT)):
+        #print(pos)
+        #print(in1)
+        #print(out1)
+        
         Net = Perceptron(in1, out1, neuron_topol)
-        y_til[pos] = Net.Output()        
-        plt.scatter(in1, out1,color='blue')
-        plt.plot(in1, y_til[pos],color='red')
+        
+        #print(Net.Output())
+        
+        y_til[pos] = Net.Output()[0][0]  
+        
+    plt.figure()
+    plt.scatter(IN, OUT,color='blue')
+    plt.plot(IN, y_til,color='red')
     #np.array(list(map(Perceptron, IN, OUT)))
     plt.show()
 
@@ -89,4 +110,5 @@ if __name__ == "__main__":
     main(x, y, (3,2,1) )
     print("--- %s seconds ---" % (time.time() - start_time))
     
+
 
