@@ -21,12 +21,10 @@ class Dataset():
         self.nEpochs = 0                     # actual number of epochs (used for training)
 
         self.classA = np.random.multivariate_normal(self.mA, self.covA, self.n).T  # generate normal
-        self.classA = np.insert(self.classA, 0, 1, axis=0) # add bias one
-        self.classA = np.insert(self.classA, 0, 1, axis=0) # add class 1 (class A = 1)
+        self.classA = np.insert(self.classA, 0, 1, axis=0)  # add class 1 (class A = 1)
 
         self.classB = np.random.multivariate_normal(self.mB, self.covB, self.n).T  # generate normal
-        self.classB = np.insert(self.classB, 0, 1, axis=0) # add bias one
-        self.classB = np.insert(self.classB, 0, [-1], axis=0) # add class -1 (class B = -1)
+        self.classB = np.insert(self.classB, 0, [-1], axis=0)  # add class -1 (class B = -1)
 
         dataset = np.concatenate((self.classA, self.classB), axis=1)
         self.nSamples = len(dataset[0])
@@ -34,8 +32,8 @@ class Dataset():
         if shuffleDataset:
             np.random.shuffle(dataset.T)
 
-        self.X = dataset[1:, :]
-        self.Y = dataset[0, :]
+        self.X = dataset[1:, :].T
+        self.Y = dataset[0, :].T
 
 
     def printDataset(self, weights):
@@ -65,3 +63,22 @@ class Dataset():
         self.batchPosition = end
 
         return self.X[:, init:end], self.Y[init:end]
+
+# example of use
+# Parameters
+
+n = 100
+mA = [ 1.0, 0.5]
+sigmaA = 0.5
+mB = [-3, -1.5]
+sigmaB = 0.5
+batchSize = 20
+
+lr = 0.001
+n_epochs = 30
+
+dataset = Dataset(n, mA, sigmaA, mB, sigmaB, batchSize)
+
+while dataset.nEpochs < n_epochs:
+    batch_patterns, batch_target = dataset.nextBatch()
+    # model.updateWeightsDeltaRule(batch_patterns, batch_target)
