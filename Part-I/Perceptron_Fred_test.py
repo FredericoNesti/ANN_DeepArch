@@ -142,8 +142,8 @@ class Perceptron():
             print('More')
             print(((1-self.momentum)*(self.all_deltas[-1] @ self.all_signals[i])))
             print(self.train_step*(self.momentum*self.old_updates[i]))
-            self.all_updates.append(self.train_step*(self.momentum*self.old_updates[i]-(1-self.momentum)*(self.all_deltas[-1].reshape(-1,1) @ self.all_signals[i-1].reshape(1,-1)).T))
-            self.all_deltas.append(( self.all_deltas[-1] @ self.all_weights[i].T )*( d_Activation_Func(self.all_signals[i-1])))
+            self.all_updates.append(self.train_step*(self.momentum*self.old_updates[i]-(1-self.momentum)*(self.all_deltas[-1].reshape(-1,1) @ self.mean_of_signals[i-1].reshape(1,-1)).T))
+            self.all_deltas.append(( self.all_deltas[-1] @ self.all_weights[i].T )*( d_Activation_Func(self.mean_of_signals[i-1])))
 
             
         print(self.all_deltas[-1])
