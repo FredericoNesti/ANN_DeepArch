@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from collections import defaultdict
 
 
-def generateDataset(start_t, end_t, beta=0.2, gamma=0.1, n=10, tal=25, noise = False, sigma_noise=0.03):
+def generateDataset(start_t, end_t, beta=0.2, gamma=0.1, n=10, tal=25, noise=False, sigma_noise=0.03):
     x = defaultdict(float)  # represent a function
     x[0] = 1.5
     for t in range(1,end_t+20):
@@ -27,6 +27,11 @@ def splitDataset(input, output):
 
     return input_train , input_val , input_test, output_train, output_val, output_test
 
+def plotTimeSeries(x, y):
+    plt.plot(x, y, label="Mackey-Glass time series")
+    plt.title('Predictions NN', fontweight="bold")
+    plt.legend(bbox_to_anchor=(0.05, .95), loc='upper left', borderaxespad=0.)
+    plt.show()
 
 def plotPredictios(y_pred, y_test, n_input):
     t = [i for i in range(1000, n_input)]
@@ -37,15 +42,26 @@ def plotPredictios(y_pred, y_test, n_input):
     plt.show()
 
 
-def plotComparePredictions(y_pred1, y_pred2, y_test, n_input, name_model1, name_model2):
-    t = [i for i in range(1000, n_input)]
-    plt.plot(t, y_pred1, label="Prediction " + name_model1)
-    plt.plot(t, y_pred2, label="Prediction " + name_model2)
-    plt.plot(t, y_test, label="True values")
+def plotComparePredictions(start_t, end_t,y_pred1, y_pred2, y_test, n_input, name_model1, name_model2):
+    _, output = generateDataset(start_t, end_t)
+    t = [i for i in range(start_t, end_t)]
+    plt.plot(t, y_pred1, label="Pred " + name_model1, color='#fa7f72')
+    plt.plot(t, y_pred2, label="Pred " + name_model2)
+    plt.plot(t, y_test, 'bo', label="Noisy data", markersize=1.5, color='blue')
+    plt.plot(t, output, 'k--', label="True func", color='#819FF7')
     plt.title('Predictions NN', fontweight="bold")
-    plt.legend(bbox_to_anchor=(0.05, .95), loc='upper left', borderaxespad=0.)
+    plt.legend(loc='upper right', borderaxespad=0.)
     plt.show()
 
+def plotNoisyPredictions(start_t, end_t, y_pred, y_test, name_model):
+    _, output = generateDataset(start_t, end_t)
+    t = [i for i in range(start_t, end_t)]
+    plt.plot(t, y_pred, label="Pred " + name_model, color='#fa7f72')  # green: #BCF5A9   salmon:#fa7f72
+    plt.plot(t, y_test, 'bo', label="Noisy data", markersize=1.5, color='blue')
+    plt.plot(t, output, 'k--', label="True func", color='#819FF7')
+    plt.title('Predictions NN', fontweight="bold")
+    plt.legend(loc='upper right', borderaxespad=0.)
+    plt.show()
 
 def plotWeights(model, regularization_const):
     weights = model.get_weights()
