@@ -2,6 +2,9 @@
 #### Libraries
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 #from dataset_reg import Dataset
 from dataset_reg_func_approx import *
 
@@ -40,7 +43,7 @@ class Perceptron():
     #train_step*(self.momentum*self.old_updates[i]-(1-self.momentum)*(self.all_deltas[-1]
 
        
-    def __init__(self,input_dimensions,neurons_structure,train_step,train_momentum,tol, max_epochs=1000):
+    def __init__(self,input_dimensions,neurons_structure,train_step,train_momentum,tol, max_epochs=5000):
         
         self.momentum = train_momentum
         self.tol = tol
@@ -64,7 +67,6 @@ class Perceptron():
                 # init weights (Normal 0 1)
                 aux = np.random.normal(0,1,(i_prevlayer)*i).reshape((i_prevlayer),i)
             i_prevlayer = i
-            self.mean_of_signals.append(np.zeros((i)))
             self.all_weights.append(aux)
         
         # initialize old_updates for training w/ momentum
@@ -103,6 +105,9 @@ class Perceptron():
         
     def Forward_step(self,inputs):
         #Propagating message (linear combinations)
+        self.mean_of_signals = []
+        for pos, i in enumerate(self.neurons_structure):
+            self.mean_of_signals.append(np.zeros((i)))
         self.all_signals = []
         i_prevlayer = 0
         for i in range(self.no_layers):
@@ -170,14 +175,31 @@ def main(ds,neuron_topol,step,mom,eps):
     Net.Train_NN(ds)
  
     ### PLOTTING
-    y_til = np.zeros((ds.X.shape[0]))
     
-    for pos,in1 in enumerate(ds.X):
-        y_til[pos] = Net.Output(in1)
-        
-    plt.figure()
-    plt.scatter(ds.X, ds.Y,color='blue')
-    plt.plot(ds.X, y_til,color='red')
+    #plt.figure()
+    ds.plotFunctoin()
+
+    #plt.scatter(ds.X, ds.Y,color='blue')
+    #plt.plot(ds.X, y_til,color='red')
+    plt.show()
+    x = np.arange(-3.0, 3.0, 0.1)
+    y = np.arange(-3.0, 3.0, 0.1)
+    X, Y = np.meshgrid(x, y)
+    Z = np.zeros(X.shape)
+    for index,(x,y) in enumerate(zip(X,Y)):
+        for index2,(x2,y2) in enumerate(zip(x,y)):
+            Z[index,index2] = Net.Output([x2,y2])
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
+                            cmap=cm.RdBu, linewidth=0, antialiased=False)
+
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+
     plt.show()
 
  # In[4]:
@@ -185,7 +207,7 @@ def main(ds,neuron_topol,step,mom,eps):
 if __name__ == "__main__":
     import time
     start_time = time.time()
-    main(dataset, (3,2,1), 0.001, 0.9, 1e-06)
+    main(dataset, (5,5,1), 0.001, 0.9, 1e-06)
     print("--- %s seconds ---" % (time.time() - start_time))
     
 
