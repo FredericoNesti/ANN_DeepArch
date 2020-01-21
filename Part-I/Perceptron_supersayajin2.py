@@ -17,7 +17,7 @@ from dataset_reg_func_approx import Dataset
 
 #np.random.seed(123)
 
-n = 100
+n = 2000
 batchSize = 20
 
 dataset = Dataset(n,batchSize)
@@ -45,7 +45,7 @@ def d_Activation_Output(X_vec):
 
 class Perceptron():
     #without Bias
-    def __init__(self,input_dimensions,neurons_structure,train_step,train_momentum,tol, max_epochs=10000):
+    def __init__(self,input_dimensions,neurons_structure,train_step,train_momentum,tol, max_epochs=1000):
         
         self.momentum = train_momentum
         self.tol = tol
@@ -100,13 +100,6 @@ class Perceptron():
             self.Backprop_train(batch_input, batch_target)
             
             print('Epoch: ', self.no_epochs)
-            #print('Weights')
-            #print(self.all_weights)
-            #print('Signals')
-            #print(self.all_signals)
-            print('Updates')
-            print(self.all_updates)
-            print('#####################')
             
         print('Epoch: ', self.no_epochs)
         
@@ -177,8 +170,8 @@ def main(ds,neuron_topol,step,mom,eps):
     ### PLOTTING
     ds.plotFunctoin()
     plt.show()
-    x = np.arange(-3.0, 3.0, 0.1)
-    y = np.arange(-3.0, 3.0, 0.1)
+    x = np.arange(-1.0, 1.0, 0.1)
+    y = np.arange(-1.0, 1.0, 0.1)
     X, Y = np.meshgrid(x, y)
     Z = np.zeros(X.shape)
     for index,(x,y) in enumerate(zip(X,Y)):
@@ -201,8 +194,22 @@ def main(ds,neuron_topol,step,mom,eps):
 
 if __name__ == "__main__":
     import time
+    x = [x[0] for x in dataset.X]
+    y = [x[1] for x in dataset.X]
+    z = dataset.Y
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(x, y, z)
+    ax.set_title('Dataset points')
+    ax.set_xlabel('X axis')
+    ax.set_ylabel('Y axis')
+    ax.set_zlabel('Function value')
+
+    plt.show()
+
     start_time = time.time()
-    main(dataset, (5,2,1), 0.001, 0, 1e-06)
+    main(dataset, (50,1), 0.001, 0, 1e-06)
     print("--- %s seconds ---" % (time.time() - start_time))
     
 

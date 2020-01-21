@@ -18,9 +18,11 @@ class Dataset():
         self.nEpochs = 0                     # actual number of epochs (used for training)
 
         dataset = self.generateDataset()
+        # dataset = np.insert(dataset, 0, 1, axis=1)  # add class 1 (class A = 1)
         self.nSamples = len(dataset[0])
 
         self.X = dataset[0]
+        # self.X = np.insert(self.X, 0, 1, axis=1)
         self.Y = dataset[1]
 
     def plotFunctoin(self):
@@ -45,7 +47,7 @@ class Dataset():
         def f(array):
             return np.exp(-(array[0]**2 + array[1]**2)/10) - 0.5
 
-        x = np.random.rand(self.n, 2)
+        x = -1 + 2*(np.random.rand(self.n, 2))
         z = np.apply_along_axis(f, 1, x)
 
         return x, z
