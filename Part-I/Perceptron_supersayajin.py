@@ -7,6 +7,7 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 #from dataset_reg import Dataset
 from dataset_reg_func_approx import Dataset
+#from dataset_class_norm import *
 
 # In[1]:
 #### Generate databases
@@ -15,7 +16,7 @@ from dataset_reg_func_approx import Dataset
 #y = np.random.normal(0,1,x.shape[0])
 
 n = 100
-batchSize = 5
+batchSize = 1
 
 dataset = Dataset(n,batchSize)
 
@@ -24,27 +25,25 @@ dataset = Dataset(n,batchSize)
 
 def Activation_Func(X_vec):
     #Sigmoid function
-    return 1.0/(1.0 + np.exp(-X_vec)) 
+    return 1.0/(1.0 + np.exp(-0.1*X_vec)) 
 
 def d_Activation_Func(X_vec):
     # Derivative of the Activation Function
-    return (1.0+Activation_Func(X_vec))*(1.0-Activation_Func(X_vec))/2.0
+    return 0.1*(1.0+Activation_Func(X_vec))*(1.0-Activation_Func(X_vec))/2.0
 
 def Activation_Output(X_vec):
     #Linear activation
-    #return X_vec
-    return 1.0/(1.0 + np.exp(-X_vec)) 
+    return X_vec
+    #return 1.0/(1.0 + np.exp(-0.001*X_vec)) 
 
 def d_Activation_Output(X_vec):
     # Derivative of the Activation Function for the last layer
-    #return np.ones((X_vec.shape))
-    return (1.0+Activation_Output(X_vec))*(1.0-Activation_Output(X_vec))/2.0
+    return np.ones((X_vec.shape))
+    #return 0.001*(1.0+Activation_Output(X_vec))*(1.0-Activation_Output(X_vec))/2.0
 
 class Perceptron():
     #without Bias
-    #train_step*(self.momentum*self.old_updates[i]-(1-self.momentum)*(self.all_deltas[-1]
-
-    def __init__(self,input_dimensions,neurons_structure,train_step,train_momentum,tol, max_epochs=10000):
+    def __init__(self,input_dimensions,neurons_structure,train_step,train_momentum,tol, max_epochs=1000):
         
         self.momentum = train_momentum
         self.tol = tol
@@ -67,10 +66,10 @@ class Perceptron():
         for pos, i in enumerate(self.neurons_structure):
             if pos == 0:
                 # init weights (Normal 0 1)
-                aux = np.random.normal(0,2,(self.no_inputs)*i).reshape((self.no_inputs),i)
+                aux = np.random.normal(0,3,(self.no_inputs)*i).reshape((self.no_inputs),i)
             else:
                 # init weights (Normal 0 1)
-                aux = np.random.normal(0,2,(i_prevlayer)*i).reshape((i_prevlayer),i)
+                aux = np.random.normal(0,3,(i_prevlayer)*i).reshape((i_prevlayer),i)
             
             #self.all_bias.append(np.random.normal(0,1,(self.no_inputs)*i).reshape(1,i)) #####
             
@@ -96,10 +95,19 @@ class Perceptron():
             self.batch_num = dataset.batchSize
             for i in range(dataset.batchSize):
                 # the input must be read tronsposed because of package dataset (diff config from here)
-                o_.append( Activation_Output(self.Output(batch_input[i,:])).tolist()[0] )
+                o_.append( self.Output(batch_input[i,:]).tolist()[0] )
                 
             self.Backprop_train(batch_input, np.array(o_), batch_target)            
             self.last_loss = self.all_deltas[0]
+            
+            print('Epoch: ', self.no_epochs)
+            #print('Weights')
+            #print(self.all_weights)
+            #print('Signals')
+            #print(self.all_signals)
+            print('Updates')
+            print(self.all_updates)
+            print('#####################')
             
         print('Epoch: ', self.no_epochs)
         
@@ -109,16 +117,11 @@ class Perceptron():
         for pos, i in enumerate(self.neurons_structure):
             self.mean_of_signals.append(np.zeros((i)))
         self.all_signals = []
-        i_prevlayer = 0
         for i in range(self.no_layers):
             if i == 0:
-                
-                
                 self.all_signals.append( self.all_weights[i].T @ inputs )
             else:
-                self.all_signals.append( self.all_weights[i].T @ Activation_Func(self.all_signals[i_prevlayer]) )
-            i_prevlayer = i
-        #for i in range(self.no_layers):
+                self.all_signals.append( self.all_weights[i].T @ Activation_Func(self.all_signals[i-1]) )
             self.mean_of_signals[i]+=self.all_signals[i]/self.batch_num
 
             
@@ -156,13 +159,13 @@ def main(ds,neuron_topol,step,mom,eps):
     ### TRAIN
     Net = Perceptron(ds.X.shape[1],neuron_topol,step,mom,eps)
     Net.Train_NN(ds)
-    W = Net.all_weights
-    S = Net.all_signals
-    print('Pesos')
-    print(W)
-    print('')
-    print('Sinais')
-    print(S)
+    #W = Net.all_weights
+    #S = Net.all_signals
+    #print('Pesos')
+    #print(W)
+    #print('')
+    #print('Sinais')
+    #print(S)
  
     ### PLOTTING
     ds.plotFunctoin()
@@ -192,8 +195,11 @@ def main(ds,neuron_topol,step,mom,eps):
 if __name__ == "__main__":
     import time
     start_time = time.time()
-    main(dataset, (100,1), 0.01, 0.9, 1e-06)
+    main(dataset, (20,10,1), 0.01, 0.9, 1e-06)
     print("--- %s seconds ---" % (time.time() - start_time))
     
+
+
+
 
 
