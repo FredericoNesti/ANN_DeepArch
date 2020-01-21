@@ -15,7 +15,7 @@ from dataset_reg_func_approx import Dataset
 #y = np.random.normal(0,1,x.shape[0])
 
 n = 100
-batchSize = 20
+batchSize = 5
 
 dataset = Dataset(n,batchSize)
 
@@ -156,6 +156,13 @@ def main(ds,neuron_topol,step,mom,eps):
     ### TRAIN
     Net = Perceptron(ds.X.shape[1],neuron_topol,step,mom,eps)
     Net.Train_NN(ds)
+    W = Net.all_weights
+    S = Net.all_signals
+    print('Pesos')
+    print(W)
+    print('')
+    print('Sinais')
+    print(S)
  
     ### PLOTTING
     ds.plotFunctoin()
@@ -188,6 +195,5 @@ if __name__ == "__main__":
     main(dataset, (100,1), 0.01, 0.9, 1e-06)
     print("--- %s seconds ---" % (time.time() - start_time))
     
-
 
 
