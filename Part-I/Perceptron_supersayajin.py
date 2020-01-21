@@ -2,7 +2,7 @@
 #### Libraries
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+#from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 #from dataset_reg import Dataset
@@ -15,7 +15,7 @@ from dataset_reg_func_approx import Dataset
 #y = np.random.normal(0,1,x.shape[0])
 
 n = 100
-batchSize = 1
+batchSize = 20
 
 dataset = Dataset(n,batchSize)
 
@@ -44,7 +44,7 @@ class Perceptron():
     #without Bias
     #train_step*(self.momentum*self.old_updates[i]-(1-self.momentum)*(self.all_deltas[-1]
 
-    def __init__(self,input_dimensions,neurons_structure,train_step,train_momentum,tol,bias, max_epochs=10000):
+    def __init__(self,input_dimensions,neurons_structure,train_step,train_momentum,tol, max_epochs=10000):
         
         self.momentum = train_momentum
         self.tol = tol
@@ -55,34 +55,34 @@ class Perceptron():
         self.Init_All_Weights()
         self.no_epochs = 0
         self.max_epochs = max_epochs
-        self.flag_bias = bias
+        #self.flag_bias = bias #####
         
     def Init_All_Weights(self):
         self.mean_of_signals = []
         self.all_weights = []
+        
+        #self.all_bias = [] #####
+        
         i_prevlayer = 0
         for pos, i in enumerate(self.neurons_structure):
             if pos == 0:
                 # init weights (Normal 0 1)
-                if self.flag_bias == False:
-                    aux = np.random.normal(0,1,(self.no_inputs)*i).reshape((self.no_inputs),i)
-                else:
-                    aux = np.random.normal(0,1,(self.no_inputs+1)*i).reshape((self.no_inputs+1),i)
+                aux = np.random.normal(0,2,(self.no_inputs)*i).reshape((self.no_inputs),i)
             else:
                 # init weights (Normal 0 1)
-                if self.flag_bias == False:
-                    aux = np.random.normal(0,1,(i_prevlayer)*i).reshape((i_prevlayer),i)
-                else:
-                    aux = np.random.normal(0,1,(i_prevlayer+1)*i).reshape((i_prevlayer+1),i)
-                    
+                aux = np.random.normal(0,2,(i_prevlayer)*i).reshape((i_prevlayer),i)
+            
+            #self.all_bias.append(np.random.normal(0,1,(self.no_inputs)*i).reshape(1,i)) #####
+            
             i_prevlayer = i
             self.all_weights.append(aux)
         
         # initialize old_updates for training w/ momentum
         self.old_updates = [np.zeros((self.all_weights[i].shape)) for i in range(self.no_layers)]
+        #self.old_updates_forbias = [np.zeros((self.all_bias[i].shape)) for i in range(self.no_layers)] ######
         
     def Train_NN(self, dataset):
-        # inputs,targets
+        # dataset = inputs,targets
         # the first delta in the recorded list is the last delta in the network
         self.last_loss = 10.0 #arbitrary
         self.old_loss = 0.0 #arbitrary
@@ -96,17 +96,8 @@ class Perceptron():
             self.batch_num = dataset.batchSize
             for i in range(dataset.batchSize):
                 # the input must be read tronsposed because of package dataset (diff config from here)
-                #self.Forward_step(batch_input[i,:])
-                
-                #print('first')
-                #print(self.Output(batch_input[i,:]))
-                #print(Activation_Output(self.Output(batch_input[i,:])))
-                #print('second')
-                
                 o_.append( Activation_Output(self.Output(batch_input[i,:])).tolist()[0] )
                 
-                #print(o_)
-            
             self.Backprop_train(batch_input, np.array(o_), batch_target)            
             self.last_loss = self.all_deltas[0]
             
@@ -121,11 +112,13 @@ class Perceptron():
         i_prevlayer = 0
         for i in range(self.no_layers):
             if i == 0:
+                
+                
                 self.all_signals.append( self.all_weights[i].T @ inputs )
             else:
                 self.all_signals.append( self.all_weights[i].T @ Activation_Func(self.all_signals[i_prevlayer]) )
             i_prevlayer = i
-        for i in range(self.no_layers):
+        #for i in range(self.no_layers):
             self.mean_of_signals[i]+=self.all_signals[i]/self.batch_num
 
             
@@ -137,34 +130,15 @@ class Perceptron():
     def Backprop_train(self,inputs,predictions,targets):
         # everything is in an opposite way
         d_o_ = d_Activation_Output(predictions)
-        
-        #aux = (predictions-targets)*d_o_
-        #print((predictions-targets).shape)
-        #print(d_o_.shape)
-        #print(aux.shape)
-        #print('checkpoint')
         self.mean_inputs = np.mean(inputs, axis=0)
         self.all_deltas = [np.mean(((predictions-targets)*d_o_).reshape(-1,1), axis=0)]
         self.all_updates = []
         
         for i in range(self.no_layers-1,0,-1):
-            #print('index',i)
-            #print(self.all_deltas[-1])
-            #print(self.all_weights[i].T)
-            #print(self.all_signals[i-1])
-            #print(self.all_signals[i])
-            #print('More')
-            #print(((1-self.momentum)*(self.all_deltas[-1] @ self.all_signals[i])))
-            #print(self.train_step*(self.momentum*self.old_updates[i]))
             self.all_updates.append(self.train_step*(self.momentum*self.old_updates[i]-(1-self.momentum)*(self.all_deltas[-1].reshape(-1,1) @ self.mean_of_signals[i-1].reshape(1,-1)).T))
             self.all_deltas.append(( self.all_deltas[-1] @ self.all_weights[i].T )*( d_Activation_Func(self.mean_of_signals[i-1])))
 
-            
-        #print(self.all_deltas[-1])
-        #print(self.mean_inputs)  
         self.all_updates.append(self.train_step*(self.momentum*self.old_updates[0]-(1-self.momentum)*(self.all_deltas[-1].reshape(-1,1) @ self.mean_inputs.reshape(1,-1) ).T)) 
-        #self.all_updates.append(self.train_step*( self.momentum*self.old_updates[0]-(1-self.momentum)*(self.all_deltas[-1].reshape(-1,inputs.shape[0]) @ inputs) ))
-        
         self.old_updates = self.all_updates.copy()
         # we want to write it backwards (see Backpropagation function)
         self.old_updates.reverse()
@@ -184,12 +158,7 @@ def main(ds,neuron_topol,step,mom,eps):
     Net.Train_NN(ds)
  
     ### PLOTTING
-    
-    #plt.figure()
     ds.plotFunctoin()
-
-    #plt.scatter(ds.X, ds.Y,color='blue')
-    #plt.plot(ds.X, y_til,color='red')
     plt.show()
     x = np.arange(-3.0, 3.0, 0.1)
     y = np.arange(-3.0, 3.0, 0.1)
@@ -211,26 +180,14 @@ def main(ds,neuron_topol,step,mom,eps):
 
     plt.show()
 
- # In[4]:
+# In[4]:
 
 if __name__ == "__main__":
     import time
     start_time = time.time()
-    main(dataset, (50,50,1), 0.01, 0.9, 1e-06, False)
+    main(dataset, (100,1), 0.01, 0.9, 1e-06)
     print("--- %s seconds ---" % (time.time() - start_time))
     
 
 
-# %%
 
-
-# %%
-
-
-# %%
-
-
-# %%
-
-
-# %%
