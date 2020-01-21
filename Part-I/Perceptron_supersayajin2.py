@@ -15,10 +15,10 @@ from dataset_reg_func_approx import Dataset
 #x =  np.arange(0,10,0.5).reshape(-1,1)
 #y = np.random.normal(0,1,x.shape[0])
 
-np.random.seed(123)
+#np.random.seed(123)
 
 n = 100
-batchSize = 1
+batchSize = 20
 
 dataset = Dataset(n,batchSize)
 
@@ -135,7 +135,7 @@ class Perceptron():
         for j,signal_of_each_input in enumerate(self.batch_signals):
             # activate signal of just the last layer
             predictions = Activation_Output(signal_of_each_input[-1])
-            d_o_ = Activation_Output(signal_of_each_input[-1])
+            d_o_ = d_Activation_Output(signal_of_each_input[-1])
             self.last_loss += np.sum(predictions-targets[j])
             tmp_deltas = ((predictions-targets[j])*d_o_).reshape(-1,1)
             
@@ -202,8 +202,17 @@ def main(ds,neuron_topol,step,mom,eps):
 if __name__ == "__main__":
     import time
     start_time = time.time()
-    main(dataset, (25,1), 0.01, 0.9, 1e-06)
+    main(dataset, (5,2,1), 0.001, 0, 1e-06)
     print("--- %s seconds ---" % (time.time() - start_time))
     
 
 
+
+
+# %%
+
+
+# %%
+
+
+# %%
