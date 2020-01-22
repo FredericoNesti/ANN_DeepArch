@@ -7,6 +7,7 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 #from dataset_reg import Dataset
 from dataset_reg_func_approx import Dataset
+#from dataset_encoder import Dataset
 #from dataset_class_norm import *
 
 # In[1]:
@@ -17,10 +18,17 @@ from dataset_reg_func_approx import Dataset
 
 np.random.seed(6)
 
-n = 100
-batchSize = 10 #batch sizes 2 and 1 gives problem
+n = 200
+batchSize = 20 #batch sizes 2 and 1 gives problem
 
 dataset = Dataset(n,batchSize)
+
+n_train = 160
+dataset_train = Dataset(n_train,batchSize)
+
+n_val = 40
+dataset_val = Dataset(n_val,batchSize)
+
 
 # In[2]:
 #### ANNs
@@ -47,7 +55,7 @@ def d_Activation_Output(X_vec):
 
 class Perceptron():
     #without Bias
-    def __init__(self,input_dimensions,neurons_structure,train_step,train_momentum,tol, max_epochs=500):
+    def __init__(self,input_dimensions,neurons_structure,train_step,train_momentum,tol, max_epochs=4000):
         
         self.momentum = train_momentum
         self.tol = tol
@@ -92,7 +100,8 @@ class Perceptron():
         while np.abs(self.last_loss - self.old_loss) >= self.tol and self.no_epochs < self.max_epochs:
             batch_input, batch_target = dataset.nextBatch()
     
-            self.no_epochs += 1
+            #self.no_epochs += 1
+            self.no_epochs = dataset.nEpochs
             self.old_loss = self.last_loss 
             
             self.Forward_step(batch_input)
@@ -100,16 +109,10 @@ class Perceptron():
                 
             self.Backprop_train(batch_input, batch_target)
             
-            print('Epoch: ', self.no_epochs)
-            #print('Weights')
-            #print(self.all_weights)
-            #print('Signals')
-            #print(self.all_signals)
-            #print('Updates')
-            #print(self.all_updates)
-            #print('#####################')
+            #print('Epoch: ', self.no_epochs)
             
-        print('Epoch: ', self.no_epochs)
+        #print('Epoch: ', self.no_epochs)
+        print('Actual Epoch: ', dataset.nEpochs)
         
     def Forward_step(self,inputs):
         # inputs are from batch
@@ -119,22 +122,23 @@ class Perceptron():
             all_signals = []
             for i in range(self.no_layers):
                 if i == 0:
+                    
                     aux2 = self.all_bias[i].T #@ np.ones((inputs[j].shape))
                     aux1 = (self.all_weights[i].T @ inputs[j]).reshape(-1,1)
                     
-                    #print(aux2.shape)
+                    #print('da uma olhada nesses shapes aquui fera')
                     #print(aux1.shape)
-                    
-                    #print('check here')
-                    #print((aux1 + aux2).shape)
+                    #print(aux2.shape)
                     
                     all_signals.append( aux1 + aux2 )
                     del(aux1,aux2)
                     
                 else:
+                    
                     aux3 = self.all_bias[i].T #@ np.ones((Activation_Func(all_signals[i-1]).shape))
                     aux4 = self.all_weights[i].T @ Activation_Func(all_signals[i-1])
                     
+                    #print('da uma olhada nesses shapes aquui fera')
                     #print(aux3.shape)
                     #print(aux4.shape)
                     
@@ -167,13 +171,20 @@ class Perceptron():
             self.all_updates_forbias = []
             for i in range(self.no_layers-1,0,-1):
                 
-                self.all_updates_forbias.append(self.train_step*(self.momentum*self.old_updates_forbias[i]-(1-self.momentum)*(tmp_deltas_bias ).T))    
+                #print('problem in layer: ', i)
+                
+                #print('')
+                #print(self.old_updates_forbias[i])
+                #print('')
+                #print(tmp_deltas_bias)
+                
+                self.all_updates_forbias.append((self.train_step*(self.momentum*self.old_updates_forbias[i]-(1-self.momentum)*(tmp_deltas_bias ).T)))    
                 self.all_updates.append(self.train_step*(self.momentum*self.old_updates[i]-(1-self.momentum)*(tmp_deltas @ Activation_Func(signal_of_each_input[i-1]).reshape(1,-1)).T))    
                 
                 tmp_deltas_bias = ((self.all_bias[i] @ tmp_deltas_bias) * (d_Activation_Func(signal_of_each_input[i-1])).reshape(-1,1)).reshape(-1,1)
                 tmp_deltas = ((self.all_weights[i] @ tmp_deltas) * (d_Activation_Func(signal_of_each_input[i-1])).reshape(-1,1)).reshape(-1,1)
             
-            self.all_updates_forbias.append(self.train_step*(self.momentum*self.old_updates_forbias[0]-(1-self.momentum)*(tmp_deltas_bias ).T)) 
+            self.all_updates_forbias.append(self.train_step*(self.momentum*self.old_updates_forbias[0]-(1-self.momentum)*(tmp_deltas_bias).T)) 
             self.all_updates.append(self.train_step*(self.momentum*self.old_updates[0]-(1-self.momentum)*(tmp_deltas @ inputs[j].reshape(1,-1)).T)) 
             
             
@@ -181,9 +192,12 @@ class Perceptron():
                 sum_updates[i]+= self.all_updates[i]/self.batch_num
                 sum_updates_bias[i]+= self.all_updates_forbias[i]/self.batch_num
         
+        self.old_updates_forbias = sum_updates_bias.copy()
+        
         self.old_updates = sum_updates.copy()
         # we want to write it backwards (see Backpropagation function)
         self.old_updates.reverse()
+        self.old_updates_forbias.reverse()
         
         for i in range(self.no_layers):
             # weights is written from left to right
@@ -193,7 +207,7 @@ class Perceptron():
    
 # In[3]:
 
-def main(ds,neuron_topol,step,mom,eps):
+def main(ds,neuron_topol,step,mom,eps,ds_train,ds_val):
     
     np.random.seed(6)
     
@@ -209,10 +223,11 @@ def main(ds,neuron_topol,step,mom,eps):
     #print(S)
  
     ### PLOTTING
+    #plt.title('True Curve')
     ds.plotFunctoin()
     plt.show()
-    x = np.arange(-3.0, 3.0, 0.1)
-    y = np.arange(-3.0, 3.0, 0.1)
+    x = np.arange(-2, 2, 0.01)
+    y = np.arange(-2, 2, 0.01)
     X, Y = np.meshgrid(x, y)
     Z = np.zeros(X.shape)
     sse = 0
@@ -230,19 +245,43 @@ def main(ds,neuron_topol,step,mom,eps):
     ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
 
     fig.colorbar(surf, shrink=0.5, aspect=5)
-
+    plt.title('Predicted Curve')
     plt.show()
     
     print('Error: ', sse)
     print('Sqrt Error: ', np.sqrt(sse))
+    
+    #########################################################
+    Net = Perceptron(ds_train.X.shape[1],neuron_topol,step,mom,eps)
+    Net.Train_NN(ds_train)
+    
+    sse_val = 0
+    sse_train = 0
+    
+    for index,(x,y) in enumerate(ds_train.X):
+        o = Net.Output(np.array([x,y]))
+        sse_train+=(o - (np.exp(-(x**2 + y**2)/10) - 0.5))**2 
+    sse_train /= n_train
+    
+    for index,(x,y) in enumerate(ds_val.X):
+        o = Net.Output(np.array([x,y]))
+        sse_val+=(o - (np.exp(-(x**2 + y**2)/10) - 0.5))**2   
+    sse_val /= n_val
+    
+    print('Sqrt Error Train: ', np.sqrt(sse_train))    
+    print('Sqrt Error Validation: ', np.sqrt(sse_val))
 
-# In[4]:
+# In[5]:
 
 if __name__ == "__main__":
     import time
     start_time = time.time()
-    main(dataset, (25,1), 0.3, 0.0, 1e-06)
+    main(dataset, (25,1), 0.3, 0.0, 1e-06,dataset_train,dataset_val)
     print("--- %s seconds ---" % (time.time() - start_time))
+    
+
+
+
     
 
 
