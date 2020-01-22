@@ -47,7 +47,7 @@ class Dataset():
         def f(array):
             return np.exp(-(array[0]**2 + array[1]**2)/10) - 0.5
 
-        x = -1 + 2*(np.random.rand(self.n, 2))
+        x = ((np.random.rand(self.n, 2))-0.5)*6
         z = np.apply_along_axis(f, 1, x)
 
         return x, z
