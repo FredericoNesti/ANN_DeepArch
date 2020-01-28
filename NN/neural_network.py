@@ -1,6 +1,18 @@
 import numpy as np
 
 
+class RbfTransformation:
+    def __init__(self, mean_array, sigma_array):
+        self.means = mean_array
+        self.sigmas = sigma_array
+
+    def __call__(self, inp):
+        ans = np.zeros(len(self.means))
+        for i, (mean, sigma) in enumerate(zip(self.means, self.sigmas)):
+            ans[i] = np.exp(-np.linalg.norm(inp - mean)/sigma)
+        return ans
+
+
 class Sigmoid:
     def func(self, x_vec):
         return 2.0 / (1.0 + np.exp(-x_vec)) - 1
@@ -18,10 +30,14 @@ class Linear:
 
 
 class Layer:
-    def __init__(self, previous_layer, nodes, function=Sigmoid(), bias_weight=1):
+    def __init__(self, previous_layer, nodes, function=Sigmoid(), bias_weight=1, fixed_weights=False):
         self.W = np.random.rand(nodes, previous_layer) / previous_layer
-        self.function = function
         self.bias = np.random.rand(nodes) / previous_layer
+        self.fixed_weights = fixed_weights
+        if fixed_weights:
+            self.W = np.ones(nodes, previous_layer)
+            self.bias = np.zeros(nodes)
+        self.function = function
         self.last_signal = -1
         self.func = function.func
         self.dev = function.dev_func
@@ -35,6 +51,8 @@ class Layer:
         return np.hstack((self.W, self.bias.reshape(-1,1)))
 
     def update_weights(self, dw, momentum):
+        if self.fixed_weights:
+            return 0
         self.W += self.dw[:, :-1]*momentum + (1-momentum)*dw[:, :-1]
         self.bias += self.dw[:, -1]*momentum + (1-momentum)*dw[:, -1]
         self.dw = dw
@@ -49,7 +67,13 @@ class NN:
         # initialization of NN
         self.signal_dim = [input_num]
         self.layers = []
+        self.transformations = []
         self.dw = []
+
+    def add_transformation(self, trans):
+        self.transformations.append(trans)
+        o = trans(np.zeros(self.signal_dim[0]))
+        self.signal_dim[0] = len(o)
 
     def add_layer(self, nodes, function=Sigmoid()):
         self.layers.append(Layer(self.signal_dim[-1], nodes, function))
@@ -57,7 +81,9 @@ class NN:
 
     def feed_forward(self, inp):
         tmp = inp
-        signal_list = [inp]
+        for trans in self.transformations:
+            tmp = trans(tmp)
+        signal_list = [tmp]
         for layer in self.layers:
             signal, tmp = layer.feed(tmp)
             signal_list.append(signal)
