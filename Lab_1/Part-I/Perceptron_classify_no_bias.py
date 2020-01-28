@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 #from dataset_reg import Dataset
-from dataset_class_norm_nonsep import Dataset
+from dataset_class_norm import Dataset
 #from dataset_class_norm import *
 
 # In[1]:
@@ -15,14 +15,14 @@ from dataset_class_norm_nonsep import Dataset
 #x =  np.arange(0,10,0.5).reshape(-1,1)
 #y = np.random.normal(0,1,x.shape[0])
 
-#np.random.seed(6)
+np.random.seed(6)
 
 n = 100
-batchSize = 5 #batch sizes 2 and 1 gives problem
-mA = [ 1.0, 0.3]
-sigmaA = 0.2/3
-mB = [0, -0.1]
-sigmaB = 0.3/3
+batchSize = 1 #batch sizes 2 and 1 gives problem
+mA = [ 1.5, 1.5]
+sigmaA = 0.5**2
+mB = [-3, -1.5]
+sigmaB = 0.5**2
 
 
 dataset = Dataset(n, mA, sigmaA, mB, sigmaB, batchSize)
@@ -96,8 +96,7 @@ class Perceptron():
         self.old_loss = 0.0 #arbitrary
         self.errorlist = []
         totallos = 0
-        self.testerrorlist = []
-        while (self.early_stop <=dataset.nSamples/dataset.batchSize or dataset.nEpochs < 1) and self.no_epochs < self.max_epochs:
+        while (self.early_stop <=dataset.nSamples/dataset.batchSize) and self.no_epochs < self.max_epochs:
             batch_input, batch_target = dataset.nextBatch()
 
             self.no_epochs += 1
@@ -114,8 +113,6 @@ class Perceptron():
                 self.early_stop+=1
             else:
                 self.early_stop=0
-            if self.early_stop >dataset.nSamples/dataset.batchSize:
-                self.errorlist.append(0)
             print('Epoch: ', self.no_epochs)
             #print('Weights')
             #print(self.all_weights)
@@ -128,10 +125,7 @@ class Perceptron():
             if dataset.batchPosition == dataset.nSamples:
                 self.errorlist.append(totallos)
                 totallos=0
-                testerror=0
-                for sample,target in zip(dataset.TX,dataset.TY):
-                    testerror+=np.abs(self.Classify(sample)-target)/2
-                self.testerrorlist.append(testerror)
+            
         print('Epoch: ', self.no_epochs)
         
     def Forward_step(self,inputs):
@@ -142,7 +136,7 @@ class Perceptron():
             all_signals = []
             for i in range(self.no_layers):
                 if i == 0:
-                    aux2 = self.all_bias[i].T #@ np.ones((inputs[j].shape))
+                    #aux2 = self.all_bias[i].T #@ np.ones((inputs[j].shape))
                     aux1 = (self.all_weights[i].T @ inputs[j]).reshape(-1,1)
                     
                     #print(aux2.shape)
@@ -151,18 +145,18 @@ class Perceptron():
                     #print('check here')
                     #print((aux1 + aux2).shape)
                     
-                    all_signals.append( aux1 + aux2 )
-                    del(aux1,aux2)
+                    all_signals.append( aux1 )
+                    #del(aux1,aux2)
                     
                 else:
-                    aux3 = self.all_bias[i].T #@ np.ones((Activation_Func(all_signals[i-1]).shape))
+                    #aux3 = self.all_bias[i].T #@ np.ones((Activation_Func(all_signals[i-1]).shape))
                     aux4 = self.all_weights[i].T @ Activation_Func(all_signals[i-1])
                     
                     #print(aux3.shape)
                     #print(aux4.shape)
                     
-                    all_signals.append( aux3 + aux4 )
-                    del(aux3,aux4)
+                    all_signals.append( aux4 )
+                    #del(aux3,aux4)
                     
             self.batch_signals.append(all_signals)
             
@@ -170,13 +164,12 @@ class Perceptron():
         # for activating just the last signal = network output
         self.Forward_step(one_input.reshape(1,-1))
         return Activation_Output(self.batch_signals[0][-1])
-    def Classify(self,one_input):
-        return (self.Output(one_input)[0][0]>0)*2-1
+    
     def Backprop_train(self,inputs,targets):
         # everything is in an opposite way
         self.last_loss = 0
         sum_updates = [np.zeros((self.all_weights[i].shape)) for i in range(self.no_layers-1,-1,-1)]
-        sum_updates_bias = [np.zeros((self.all_bias[i].shape)) for i in range(self.no_layers-1,-1,-1)]
+        #sum_updates_bias = [np.zeros((self.all_bias[i].shape)) for i in range(self.no_layers-1,-1,-1)]
         for j,signal_of_each_input in enumerate(self.batch_signals):
             
             # activate signal of just the last layer
@@ -187,25 +180,25 @@ class Perceptron():
             self.last_loss += np.sum(np.abs(((predictions>=0)*2-1)-targets[j])/2)
             tmp_deltas = ((predictions-targets[j])*d_o_).reshape(-1,1)
             
-            tmp_deltas_bias = ((predictions-targets[j])*d_o_).reshape(-1,1)
+            #tmp_deltas_bias = ((predictions-targets[j])*d_o_).reshape(-1,1)
             
             self.all_updates = []
             self.all_updates_forbias = []
             for i in range(self.no_layers-1,0,-1):
                 
-                self.all_updates_forbias.append(self.train_step*(self.momentum*self.old_updates_forbias[i]-(1-self.momentum)*(tmp_deltas_bias ).T))    
+                #self.all_updates_forbias.append(self.train_step*(self.momentum*self.old_updates_forbias[i]-(1-self.momentum)*(tmp_deltas_bias ).T))    
                 self.all_updates.append(self.train_step*(self.momentum*self.old_updates[i]-(1-self.momentum)*(tmp_deltas @ Activation_Func(signal_of_each_input[i-1]).reshape(1,-1)).T))    
                 
-                tmp_deltas_bias = ((self.all_bias[i] @ tmp_deltas_bias) * (d_Activation_Func(signal_of_each_input[i-1])).reshape(-1,1)).reshape(-1,1)
+                #tmp_deltas_bias = ((self.all_bias[i] @ tmp_deltas_bias) * (d_Activation_Func(signal_of_each_input[i-1])).reshape(-1,1)).reshape(-1,1)
                 tmp_deltas = ((self.all_weights[i] @ tmp_deltas) * (d_Activation_Func(signal_of_each_input[i-1])).reshape(-1,1)).reshape(-1,1)
             
-            self.all_updates_forbias.append(self.train_step*(self.momentum*self.old_updates_forbias[0]-(1-self.momentum)*(tmp_deltas_bias ).T)) 
+            #self.all_updates_forbias.append(self.train_step*(self.momentum*self.old_updates_forbias[0]-(1-self.momentum)*(tmp_deltas_bias ).T)) 
             self.all_updates.append(self.train_step*(self.momentum*self.old_updates[0]-(1-self.momentum)*(tmp_deltas @ inputs[j].reshape(1,-1)).T)) 
             
             
             for i in range(len(self.all_updates)):
                 sum_updates[i]+= self.all_updates[i]/self.batch_num
-                sum_updates_bias[i]+= self.all_updates_forbias[i]/self.batch_num
+                #sum_updates_bias[i]+= self.all_updates_forbias[i]/self.batch_num
         
         self.old_updates = sum_updates.copy()
         # we want to write it backwards (see Backpropagation function)
@@ -215,7 +208,7 @@ class Perceptron():
             # weights is written from left to right
             # updates are written from right to left (check minus signal)
             self.all_weights[i] += sum_updates[-(i+1)]
-            self.all_bias[i] += sum_updates_bias[-(i+1)]
+            #self.all_bias[i] += sum_updates_bias[-(i+1)]
    
 # In[3]:
 
@@ -237,33 +230,22 @@ def main(ds,neuron_topol,step,mom,tol,eps):
     ### PLOTTING
     
     w = Net.all_weights[0].reshape(-1)
-    b = Net.all_bias[0][0]
+    b = 0
     sse = 0
     #w = np.flip(w)
     w = np.insert(w,0,b,axis=0)
+    print(w)
     print("Epochs used")
     print(ds.nEpochs)
     ds.printDataset([w])
     plt.show()
     plt.figure()
-    #Net.errorlist.append(0)
+    Net.errorlist.append(0)
     plt.plot(np.array(Net.errorlist))
     plt.xlabel('Epochs')
     plt.ylabel('Misclassified points')
-    plt.title("training error")
     plt.show()
-    plt.figure()
-    #Net.errorlist.append(0)
-    print(np.array(Net.testerrorlist))
-    plt.plot(np.array(Net.testerrorlist))
-    plt.xlabel('Epochs')
-    plt.ylabel('Misclassified points')
-    plt.title("test error")
-    plt.show()
-    print("Epochs used")
-    print(ds.nEpochs)
-    print("Training Error" + str(np.array(Net.errorlist)[-1]))
-    print("Test Error" + str(np.array(Net.testerrorlist)[-1]))
+    print(np.array(Net.errorlist))
     print('Error: ', sse)
     print('Sqrt Error: ', np.sqrt(sse))
 
@@ -272,7 +254,7 @@ def main(ds,neuron_topol,step,mom,tol,eps):
 if __name__ == "__main__":
     import time
     start_time = time.time()
-    main(dataset, [2,1], 0.3, 0.0, 1e-06,2500)
+    main(dataset, [1], 0.01, 0.0, 1e-06,100000)
     print("--- %s seconds ---" % (time.time() - start_time))
     
 

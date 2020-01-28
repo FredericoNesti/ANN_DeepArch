@@ -16,7 +16,6 @@ class Dataset():
         self.batchSize = batchSize           # size of the batch during training
         self.batchPosition = 0               # used for calculate the next batch
         self.nEpochs = 0                     # actual number of epochs (used for training)
-
         dataset = self.generateDataset()
         # dataset = np.insert(dataset, 0, 1, axis=1)  # add class 1 (class A = 1)
         self.nSamples = len(dataset[0])
