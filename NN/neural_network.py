@@ -9,7 +9,7 @@ class RbfTransformation:
     def __call__(self, inp):
         ans = np.zeros(len(self.means))
         for i, (mean, sigma) in enumerate(zip(self.means, self.sigmas)):
-            ans[i] = np.exp(-np.linalg.norm(inp - mean)/sigma)
+            ans[i] = np.exp(-(np.linalg.norm(inp - mean)**2)/sigma)
         return ans
 
 
