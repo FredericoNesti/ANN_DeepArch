@@ -11,18 +11,26 @@ class RbfTransformation:
         for i, (mean, sigma) in enumerate(zip(self.means, self.sigmas)):
             ans[i] = np.exp(-(np.inner(inp - mean, inp - mean))/sigma/2)
         return ans
+        #return np.exp(-(np.inner(inp - self.means, inp - self.means))/self.sigmas/2)
 
-    def train_mu(self, data, step, epochs):
+    def train_mu(self, data, step, epochs, winners=1):
         for epoch in range(epochs):
             for sample in np.random.choice(data, len(data)):
-                minn = np.inf
-                minn_i = -1
+                distances = np.zeros(len(self.means))
                 for i in range(len(self.means)):
-                    distance = np.linalg.norm(sample-self.means[i])
-                    if minn > distance:
-                        minn = distance
-                        minn_i = i
-                self.means[minn_i] += step*(sample-self.means[minn_i])
+                    distances[i] = np.linalg.norm(sample-self.means[i])
+                for i in np.argsort(distances)[:winners]:
+                    self.means[i] += step*(sample-self.means[i])
+
+
+class StepTransformation:
+    def __init__(self, mean_array):
+        self.means = mean_array
+
+    def __call__(self, inp):
+        ans = np.zeros(len(self.means))
+        ans[np.argmin(np.abs(inp-self.means))] = 1
+        return ans
 
 
 class Sigmoid:
