@@ -11,10 +11,6 @@ def dist(vector): # Euclidean distance of a vector
 
 # SELF ORGANIZED MAP
 class SOM:
-    '''
-    Requirements: 
-        classes RBFTransformation, Linear
-    '''
     
     def __init__(self,
                  file,
@@ -23,7 +19,7 @@ class SOM:
                  ftype=int,
                  fdelim = ',',
                  weight_shape=(100,84),
-                 neighbourhood_0 = [25,25],
+                 neighbourhood_0 = [10,10],
                  step_learn = 0.2,
                  n_epochs = 20,
                  neighbourhood_type = 'linear'): # either linear or circular
@@ -32,7 +28,7 @@ class SOM:
         self.n_animals = fdim[1]
         os.chdir(fpath) #set file path directory
         
-        self.input = np.loadtxt(file,dtype=ftype,delimiter=fdelim).reshape(self.fdim) # load file -> "props" matrix
+        self.input = np.loadtxt(file,dtype=ftype,delimiter=fdelim).reshape(fdim) # load file -> "props" matrix
         
         self.neighbours = neighbourhood_0
         self.step_learn = step_learn
@@ -58,7 +54,11 @@ class SOM:
                 
                 # keep winner and neighbourhood
                 wn_indexes =  [(pick_row+i)%self.n_animals for i in range(self.neighbours[1])] # winner and neighbour indexes
-                wn_indexes.append([(pick_row-i)%self.n_animals for i in range(self.neighbours[0])])
+                for i in range(self.neighbours[0]):
+                    wn_indexes.append((pick_row-i)%self.n_animals)
+                
+                print(wn_indexes)
+                
                 wn_indexes = np.sort(wn_indexes)
                 
                 # correct updates according to type of neighbourhood
@@ -80,6 +80,7 @@ class SOM:
             counter_epoch += 1     
    
     def fwd(self):
-        
+        # use the SOM with this function
         self.output = self.weight @ dist(self.input.T)
         return self.output
+
