@@ -1,3 +1,2 @@
-data_lab2/
-.idea/
-
+**/data_lab2
+**/.idea
