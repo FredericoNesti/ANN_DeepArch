@@ -1,12 +1,16 @@
 import numpy as np
+import itertools as it
+
 
 def sign(x):
-    if x >= 0: return 1
-    else: return -1
+    if x >= 0:
+        return 1
+    else:
+        return -1
+
 
 class Hopfield():
     def __init__(self, input_mem_patterns):
-
         self.n_nodes = input_mem_patterns.shape[1]
         self.weights = self.init_weights(input_mem_patterns)
 
@@ -26,28 +30,38 @@ class Hopfield():
 
     def update_till_convergence(self, pattern):
         next_pattern = self.update_rule(pattern)
-        while(np.all(next_pattern != pattern)):
+        while (np.all(next_pattern != pattern)):
             pattern = next_pattern
             next_pattern = self.update_rule(pattern)
 
         return next_pattern
 
-input_mem_patterns = np.array([[-1, -1,  1, -1,  1, -1, -1,  1],
-                               [-1, -1, -1, -1, -1,  1, -1, -1],
-                               [-1,  1,  1, -1, -1,  1, -1,  1]])
+
+input_mem_patterns = np.array([[-1, -1, 1, -1, 1, -1, -1, 1],
+                               [-1, -1, -1, -1, -1, 1, -1, -1],
+                               [-1, 1, 1, -1, -1, 1, -1, 1]])
+
+# Dissimilar paterns
+# input_mem_patterns = np.array([[-1, -1,  1, -1,  1, -1, -1,  1],
+#                               [ 1,  1, -1,  1, -1,  1,  1, -1]])
 
 hp = Hopfield(input_mem_patterns)
 
-
 ## Task 3.1
 # check for noise
-xd = np.array([[1, -1,  1, -1,  1, -1, -1,  1],
-               [1,  1, -1, -1, -1,  1, -1, -1],
-               [1,  1,  1, -1,  1,  1, -1,  1]])
+xd = np.array([[1, -1, 1, -1, 1, -1, -1, 1],
+               [1, 1, -1, -1, -1, 1, -1, -1],
+               [1, 1, 1, -1, 1, 1, -1, 1]])
 
 for x in xd:
     print("Input pattern:", x)
     print("Output pattern:", hp.update_till_convergence(x))
     print("")
-
-print(np.linalg.eig(hp.weights))
+attractors = set()
+for sample in list(it.product([-1, 1], repeat=8)):
+    ts = hp.update_till_convergence(sample)
+    attractors.add(np.array2string(ts))
+print("ATTRACTORS: n=" + str(len(attractors)))
+for at in attractors:
+    print(at)
+print("------")
