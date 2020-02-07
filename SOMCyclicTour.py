@@ -102,6 +102,7 @@ class SOMCyclicTour:
 
     def plotResult(self):
 
+
         labels = np.apply_along_axis(self.output, 1, self.input)
 
         label2city_coord = {}
@@ -119,16 +120,11 @@ class SOMCyclicTour:
         ans += '-> end'
         print(ans)
 
-        # for city,label in zip(self.input, labels):
-        #     x = [city[0], self.weight[label][0]]
-        #     y = [city[1], self.weight[label][1]]
-        #     plt.plot(x, y, color='m')
-
-        plt.plot(self.weight[:, 0], self.weight[:, 1])
+        tmp_weight = np.vstack([self.weight, self.weight[0, :]])
+        plt.plot(tmp_weight[:, 0], tmp_weight[:, 1])
         plt.plot(self.weight[:, 0], self.weight[:, 1], 'ro', label='weights of model')
         plt.plot(self.input[:, 0], self.input[:, 1], 'go', label='cities points')
-        plt.title('Predictions NN', fontweight="bold")
-        # plt.legend(loc='upper right', borderaxespad=0.)
+        plt.legend(loc='upper right', borderaxespad=0.)
         plt.show()
 
 

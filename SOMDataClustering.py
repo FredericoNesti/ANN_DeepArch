@@ -25,7 +25,7 @@ class SOMDataClustering:
                  step_learn=0.1,
                  n_epochs=100):
 
-        self.input = np.loadtxt('data_lab2/votes.dat',dtype=float,delimiter=',').reshape(fdim)  # input dataset
+        self.input = np.loadtxt('data_lab2/votes.dat', dtype=float, delimiter=',').reshape(fdim)  # input dataset
         self.weight = np.random.uniform(0, 1, weight_shape)  # weights from the model
         # self.weight = np.mean(self.input, axis=0) * np.ones(weight_shape)
         self.n_patterns = self.input.shape[0]  # total number of patterns
@@ -40,7 +40,7 @@ class SOMDataClustering:
         distance = [0] * self.n_output_patterns
         for i in range(self.n_output_patterns):
             distance[i] = self.node2freq[i] * np.linalg.norm(self.weight[i,:] - cand_attr)
-        # distance = dist(self.weight - cand_attr)
+
         pick_row = np.argmin(distance)
         return pick_row
 
@@ -50,37 +50,33 @@ class SOMDataClustering:
         stack = [winner_idx]
         visited = set()
 
-        while curr_neigh <= self.n_neighbours:
+        while curr_neigh <= self.n_neighbours and stack:
             next_idx = stack.pop()
             if next_idx in visited:
                 continue
 
             wn_neighbors_idx[next_idx] = 1
+            curr_neigh += 1
             visited.add(next_idx)
             i = next_idx // 10
             j = next_idx % 10
 
-            # add neighbors (graph algorithm)
+            # add neighbors (BFS)
             if 0 <= i - 1 < 10:
                 up = (i - 1) * 10 + j
-                if up not in visited:
-                    stack.append(up)
-                    curr_neigh+= 1
+                stack.append(up)
+
             if 0 <= i + 1 < 10:
                 down = (i + 1) * 10 + j
-                if down not in visited:
-                    stack.append(down)
-                    curr_neigh += 1
+                stack.append(down)
+
             if 0 <= j - 1 < 10:
                 left = i * 10 + j - 1
-                if left not in visited:
-                    stack.append(left)
-                    curr_neigh += 1
+                stack.append(left)
+
             if 0 <= j + 1 < 10:
                 right = i * 10 + j + 1
-                if right not in visited:
-                    stack.append(right)
-                    curr_neigh += 1
+                stack.append(right)
 
         return wn_neighbors_idx
 
@@ -116,13 +112,15 @@ class SOMDataClustering:
         # use the SOM with this function
         return self.findRowWinnerWeight(x)
 
-    def plotResult(self, file, title, index2name):
+    def plotResult(self, file, title, index2name=None):
         category = np.loadtxt(file, dtype=int, comments='%')
         cat_counter = Counter(category)
         n_cat = len(cat_counter.keys())
 
         winners_idx = np.apply_along_axis(self.output, 1, self.input)
-        category_symb = ['ro', 'bo', 'go', 'ko', 'co', 'yo', 'mo', 'rx']
+        category_symb = ['ro', 'bo', 'go', 'ko', 'co', 'yo', 'mo',
+                         'rx', 'bx', 'gx', 'kx', 'cx', 'yx', 'mx']*100
+
         point_size_offset = 1.2
         styles = [0 for i in range(n_cat)]
         for i in range(self.n_output_patterns):
@@ -134,7 +132,9 @@ class SOMDataClustering:
                 col = i//10
                 row = i % 10
                 styles[most_used_category], = plt.plot(row, col, category_symb[most_used_category], markersize=(point_size*point_size_offset), alpha=0.7)
-        plt.legend(styles, [index2name[i] for i in range(n_cat)])
+
+        if index2name:
+            plt.legend(styles, [index2name[i] for i in range(n_cat)])
 
         plt.title(title, fontweight="bold")
         plt.show()
@@ -149,6 +149,20 @@ if cat == 'sex':
     index2name = {0: 'Male', 1: 'Female'}
     som.plotResult('data_lab2/mpsex.dat', "Gender SOM", index2name)
 
+
 if cat == 'party':
-    index2name = {0: 'no party', 1:'m', 2:'fp', 3:'s', 4:'v', 5:'mp', 6:'kd', 7:'c'}
+    # Social Democrats = s,
+    # New Moderates = M,
+    # Centre party = C,
+    # Left party = V,
+    # Christaind democrats = KD,
+    # Liberals = fp,
+    # Greeen party = mp
+
+    # index2name = {0: 'no party', 1:'m', 2:'fp', 3:'s', 4:'v', 5:'mp', 6:'kd', 7:'c'}
+    index2name = {0: 'no party', 1: 'New Moderates', 2: 'Liberals', 3: 'Social Democrats', 4: 'Left party',
+                  5: 'Greeen party', 6: 'Christaind democrats', 7: 'Centre party'}
     som.plotResult('data_lab2/mpparty.dat', "Party SOM", index2name)
+
+if cat == 'district':
+    som.plotResult('data_lab2/mpdistrict.dat', "District SOM")
