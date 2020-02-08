@@ -24,7 +24,7 @@ class Hopfield():
         # return 0.5 * (np.random.normal(0, 1, (self.n_nodes, self.n_nodes)) +
         #               np.random.normal(0, 1, (self.n_nodes, self.n_nodes)))  # random, but symetric
 
-    def update_rule(self, pattern, seq_update=False):
+    def update_rule(self, pattern, random_seq_update=False):
         """
             Pertorms the update on weights as following:
                 xi sign ( sum over j of wij xj )
@@ -32,27 +32,48 @@ class Hopfield():
             if sequential updatate is true, we update only a few values of the pattern
         """
         new_pattern = np.apply_along_axis(lambda t: sign(np.dot(t, pattern)), 1, self.weights)
-        if seq_update:
-            n_updates = np.random.randint(len(new_pattern))
-            r = np.random.random(len(new_pattern))
-            return np.array([new_pattern[i] if rand < 0.5 else pattern for i,rand in enumerate(r)])
+        if random_seq_update:
+            rand_selection = np.random.rand(len(new_pattern)) < 0.5
+            return 1*rand_selection * pattern + 1*(not rand_selection) * new_pattern
         else:
             return new_pattern
 
-    def update_till_convergence(self, pattern, follow_energy=False, seq_update=False):
+    def update_till_convergence(self, pattern, follow_energy=False, seq_update=False, random_seq_update=False):
 
         if follow_energy:
             energy = [self.energy(pattern)]
 
-        next_pattern = self.update_rule(pattern, seq_update)
-        max_int = 20
-        while (not np.all(next_pattern == pattern) and max_int > 0):
-            if follow_energy:
-                energy.append(self.energy(next_pattern))
+        max_int = 2000000
+        curr_int = 0
 
-            pattern = next_pattern
-            next_pattern = self.update_rule(pattern, seq_update)
-            max_int -= 1
+        if seq_update:
+            converged = False
+            while not converged and curr_int < max_int:
+                prev_pattern = np.copy(pattern)
+                if follow_energy:
+                    energy.append(self.energy(pattern))
+
+                for i in range(len(pattern)):
+                    pattern[i] = sign(np.dot(self.weights[i], pattern))
+                    curr_int += 1
+                    if curr_int % 100 == 0:
+                        self.plot_binary_image(pattern)
+
+                converged = np.all(prev_pattern == pattern)
+
+
+
+        else:
+            next_pattern = self.update_rule(pattern, random_seq_update)
+            while not np.all(next_pattern == pattern) and curr_int < max_int:
+                if follow_energy:
+                    energy.append(self.energy(next_pattern))
+
+                pattern = next_pattern
+                next_pattern = self.update_rule(pattern, random_seq_update)
+                curr_int += 1
+
+        print("Total number of intetarions:", curr_int)
 
         if follow_energy:
             interaction = [i for i in range(len(energy))]
@@ -60,7 +81,7 @@ class Hopfield():
             plt.legend(bbox_to_anchor=(0.05, .95), loc='upper left', borderaxespad=0.)
             plt.show()
 
-        return next_pattern
+        return pattern
 
     def plot_binary_image(self, pattern):
         plt.imshow(pattern.reshape(32, 32), cmap=plt.cm.gray)
