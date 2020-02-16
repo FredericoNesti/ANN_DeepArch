@@ -8,6 +8,12 @@ def sign(x):
         return 1
     else:
         return -1
+
+def sign2(x):
+    if x >= 0:
+        return 1
+    else:
+        return 0
     
 # In[0]:
         
@@ -74,7 +80,7 @@ class Hopfield():
 
             elif type_update == 'slightly_update': # question 3.6
                 for i in range(len(pattern)):
-                    my_pattern[i] = 0.5+0.5*sign(np.dot(self.weights[i], my_pattern)-self.bias)
+                    my_pattern[i] = 0.5+0.5*sign2(np.dot(self.weights[i], my_pattern)-self.bias)
                     curr_int += 1
                     energy.append(self.energy(my_pattern))
                     if curr_int % 100 == 0 and verbose:
@@ -286,8 +292,13 @@ MC_iter = 1
 
 def create_random_patterns(activity,no_pat=no_pat,no_feat=no_feat):
     pattern_array = np.zeros((no_pat,no_feat))
-    for i in range(no_pat):
+    i=0
+    while i < no_pat:
+    #for i in range(no_pat):
         pattern_array[i,:] = np.random.binomial(1,activity,size=no_feat)
+        if np.sum(np.abs(pattern_array[i,:] - pattern_array[0:i,:])) > i-1:
+            i += 1
+            
     return pattern_array 
 
 patterns = create_random_patterns(activity)
@@ -300,23 +311,26 @@ patterns = create_random_patterns(activity)
 ##########################
 #change parameters here!
 activity = 0.1
-biases = np.array([0,0.2,0.4,0.6,0.8,1.0]) #np.arange(0,1,0.3)
-MC_iter = 1
+avg_activity = np.sum(patterns)/(no_feat*no_pat)
+biases = np.array([0,0.5,1,2,10]) #np.arange(0,1,0.3)
+MC_iter = 1000
 ##########################
 
 out_store = np.zeros((no_pat,no_feat))
 howmany_bias = np.zeros((biases.shape[0],no_pat))
+
 for j,b in enumerate(biases):
-    hp36 = Hopfield(patterns,avg_activity=activity,bias=b)
+    hp36 = Hopfield(patterns,avg_activity=avg_activity,bias=b)
 
     for _ in range(MC_iter):
         print(_)
         for i in range(no_pat):
-            out_store[i,:] = hp36.update_till_convergence(patterns[i,:],type_update='slightly_update')
-            howmany_bias[j,i] += np.all(out_store[i,:]==patterns[i,:])
             
-            print(out_store)
-            print(howmany_bias)
+            out_store[i,:] = hp36.update_till_convergence(patterns[i,:],type_update='slightly_update')
+            howmany_bias[j,i] += np.all((out_store[i,:]==patterns[i,:]))
+            
+            #print(out_store)
+            #print(howmany_bias)
 
 plt.figure()
 for j,b in enumerate(biases):
@@ -325,9 +339,6 @@ plt.xlabel('Bias')
 plt.show()
 
 ##### Test Activity
-
-
-
 
 
 
