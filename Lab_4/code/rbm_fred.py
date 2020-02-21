@@ -129,7 +129,8 @@ class RestrictedBoltzmannMachine():
         
         # [DONE TASK 4.1] compute probabilities and activations (samples from probabilities) of hidden layer (replace the zeros below)
         prob = sigmoid(visible_minibatch @ self.weight_vh + self.bias_h)
-        return prob, sample_binary(prob)
+        sample = sample_binary(prob)
+        return prob, sample
 
 
     def get_v_given_h(self,hidden_minibatch):
@@ -168,7 +169,8 @@ class RestrictedBoltzmannMachine():
                         
             # [DONE TASK 4.1] compute probabilities and activations (samples from probabilities) of visible layer (replace the pass and zeros below)
             prob = sigmoid(hidden_minibatch @ self.weight_vh.T + self.bias_v)
-        return prob, sample_binary(prob)
+            sample = sample_binary(prob)
+        return prob, sample
 
     """ rbm as a belief layer : the functions below do not have to be changed until running a deep belief net """
 
@@ -194,7 +196,8 @@ class RestrictedBoltzmannMachine():
 
         # [DONE TASK 4.2] perform same computation as the function 'get_h_given_v' but with directed connections (replace the zeros below) 
         prob = sigmoid(visible_minibatch @ self.weight_v_to_h + self.bias_h)
-        return prob, sample_binary(prob)
+        sample = sample_binary(prob)
+        return prob, sample
 
     def get_v_given_h_dir(self,hidden_minibatch):
         """Compute probabilities p(v|h) and activations v ~ p(v|h)
@@ -218,17 +221,23 @@ class RestrictedBoltzmannMachine():
             to get activities. The probabilities as well as activities can then be concatenated back into a normal visible layer.
             """
             
-            # [TODO TASK 4.2] Note that even though this function performs same computation as 'get_v_given_h' but with directed connections,
+            # [DONE TASK 4.2] Note that even though this function performs same computation as 'get_v_given_h' but with directed connections,
             # this case should never be executed : when the RBM is a part of a DBN and is at the top, it will have not have directed connections.
             # Appropriate code here is to raise an error (replace pass below)
-
-            pass
+            output = hidden_minibatch @ self.weight_h_to_v.T + self.bias_v
+            out_samples = output[:, :-self.n_labels]
+            out_labels = output[:, -self.n_labels:]
+            prob_samples = sigmoid(out_samples)
+            prob_labels = softmax(out_labels)
+            prob = np.hstack((prob_samples, prob_labels))
+            sample = np.hstack((sample_binary(prob_samples), sample_categorical(prob_labels)))
             
         else:
                         
             # [DONE TASK 4.2] performs same computaton as the function 'get_v_given_h' but with directed connections (replace the pass and zeros below)             
-            prob = sigmoid(hidden_minibatch @ self.weight_h_to_v.T + self.bias_v)                 
-        return prob, sample_binary(prob)
+            prob = sigmoid(hidden_minibatch @ self.weight_h_to_v.T + self.bias_v)      
+            sample = sample_binary(prob)
+        return prob, sample
         
     def update_generate_params(self,inps,trgs,preds):
         """Update generative weight "weight_h_to_v" and bias "bias_v"
