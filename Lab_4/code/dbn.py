@@ -146,7 +146,6 @@ class DeepBeliefNet:
             """
             self.rbm_stack['vis--hid'].cd1(visible_trainset=vis_trainset, n_iterations=n_iterations)
             self.rbm_stack["vis--hid"].untwine_weights()
-            # self.savetofile_rbm(loc="trained_rbm",name="vis--hid")
 
 
 
@@ -156,11 +155,9 @@ class DeepBeliefNet:
             """
 
             _, activations_h = self.rbm_stack['vis--hid'].get_h_given_v_dir(vis_trainset)
-            _, activations_v = self.rbm_stack['vis--hid'].get_v_given_h_dir(activations_h)
 
-            self.rbm_stack['hid--pen'].cd1(activations_v, n_iterations=n_iterations)
+            self.rbm_stack['hid--pen'].cd1(activations_h, n_iterations=n_iterations)
             self.rbm_stack["hid--pen"].untwine_weights()
-            # self.savetofile_rbm(loc="trained_rbm",name="hid--pen")
 
 
             print("training pen+lbl--top")
@@ -169,12 +166,11 @@ class DeepBeliefNet:
             """
 
             _, activations_h = self.rbm_stack['vis--hid'].get_h_given_v_dir(vis_trainset)
-            _, activations_v = self.rbm_stack['vis--hid'].get_v_given_h_dir(activations_h)
-            _, activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_v)
-            _, activations_v = self.rbm_stack['hid--pen'].get_v_given_h_dir(activations_h)
-
-            self.rbm_stack['pen+lbl--top'].cd1(activations_v, n_iterations=n_iterations)
-            # self.rbm_stack["pen+lbl--top"].untwine_weights()
+            _, activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_h)
+            full_activations = np.hstack((activations_h, lbl_trainset))
+            self.rbm_stack['pen+lbl--top'].cd1(full_activations, n_iterations=n_iterations)
+            self.savetofile_rbm(loc="trained_rbm", name="vis--hid")
+            self.savetofile_rbm(loc="trained_rbm", name="hid--pen")
             self.savetofile_rbm(loc="trained_rbm",name="pen+lbl--top")            
 
         return    

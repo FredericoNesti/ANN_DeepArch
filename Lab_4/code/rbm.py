@@ -191,18 +191,24 @@ class RestrictedBoltzmannMachine():
 
             # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of visible layer (replace the pass below). \
             # Note that this section can also be postponed until TASK 4.2, since in this task, stand-alone RBMs do not contain labels in visible layer.
-            
-            pass
+            output = hidden_minibatch @ self.weight_vh.T + self.bias_v
+            out_samples = output[:, :-self.n_labels]
+            out_labels = output[:, -self.n_labels:]
+            prob_samples = sigmoid(out_samples)
+            prob_labels = softmax(out_labels)
+            prob = np.hstack((prob_samples, prob_labels))
+            sample = np.hstack((sample_binary(prob_samples), sample_categorical(prob_labels)))
+
             
         else:
                         
             # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of visible layer (replace the pass and zeros below)
-            prob = np.zeros((n_samples, self.ndim_visible))
             prob = sigmoid(hidden_minibatch @ self.weight_vh.T + self.bias_v)
+            sample = sample_binary(prob)
             # for i, sample in enumerate(hidden_minibatch):
             #     prob[i] = sigmoid(self.weight_vh @ sample + self.bias_v)
             #     #prob[i] = prob[i]/np.sum(prob[i])
-        return prob, sample_binary(prob)
+        return prob, sample
 
 
     
@@ -233,9 +239,10 @@ class RestrictedBoltzmannMachine():
 
         n_samples = visible_minibatch.shape[0]
 
-        # [TODO TASK 4.2] perform same computation as the function 'get_h_given_v' but with directed connections (replace the zeros below) 
+        # [TODO TASK 4.2] perform same computation as the function 'get_h_given_v' but with directed connections (replace the zeros below)
+        prob = sigmoid(visible_minibatch @ self.weight_v_to_h + self.bias_h)
         
-        return np.zeros((n_samples,self.ndim_hidden)), np.zeros((n_samples,self.ndim_hidden))
+        return prob, sample_binary(prob)
 
 
     def get_v_given_h_dir(self,hidden_minibatch):
@@ -274,10 +281,9 @@ class RestrictedBoltzmannMachine():
         else:
                         
             # [TODO TASK 4.2] performs same computaton as the function 'get_v_given_h' but with directed connections (replace the pass and zeros below)             
-
-            pass
+            prob = sigmoid(hidden_minibatch @ self.weight_h_to_v + self.bias_v)
             
-        return np.zeros((n_samples,self.ndim_visible)), np.zeros((n_samples,self.ndim_visible))        
+        return prob, sample_binary(prob)
         
     def update_generate_params(self,inps,trgs,preds):
         
