@@ -128,13 +128,13 @@ class RestrictedBoltzmannMachine():
         self.delta_weight_vh = np.zeros(self.weight_vh.shape)
         self.delta_bias_h = np.zeros(self.bias_h.shape)
         # [TODO TASK 4.1] get the gradients from the arguments (replace the 0s below) and update the weight and bias parameters
+        self.delta_bias_v = np.mean(self.learning_rate * (v_0 - v_k), axis=0)
+        self.delta_bias_h = np.mean(self.learning_rate * (h_0 - h_k), axis=0)
         for i in range(v_0.shape[0]):
-            self.delta_bias_v += self.learning_rate*(v_0[i] - v_k[i])
             self.delta_weight_vh += self.learning_rate*(np.outer(v_0[i], h_0[i]) - np.outer(v_k[i], h_k[i]))
-            self.delta_bias_h += self.learning_rate*(h_0[i] - h_k[i])
-        self.bias_v += self.delta_bias_v/v_0.shape[0]
+        self.bias_v += self.delta_bias_v
         self.weight_vh += self.delta_weight_vh/v_0.shape[0]
-        self.bias_h += self.delta_bias_h/v_0.shape[0]
+        self.bias_h += self.delta_bias_h
         
         return
 
@@ -154,9 +154,10 @@ class RestrictedBoltzmannMachine():
         assert self.weight_vh is not None
         n_samples = visible_minibatch.shape[0]
         prob = np.zeros((n_samples, self.ndim_hidden))
-        for i, sample in enumerate(visible_minibatch):
-            prob[i] = sigmoid(self.weight_vh.T @ sample + self.bias_h)
-            #prob[i] = prob[i] / np.sum(prob[i])
+        prob = sigmoid(visible_minibatch @ self.weight_vh + self.bias_h)
+        #for i, sample in enumerate(visible_minibatch):
+        #    prob[i] = sigmoid(self.weight_vh.T @ sample + self.bias_h)
+        #    #prob[i] = prob[i] / np.sum(prob[i])
         # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of hidden layer (replace the zeros below)
         return prob, sample_binary(prob)
 
@@ -196,9 +197,10 @@ class RestrictedBoltzmannMachine():
                         
             # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of visible layer (replace the pass and zeros below)
             prob = np.zeros((n_samples, self.ndim_visible))
-            for i, sample in enumerate(hidden_minibatch):
-                prob[i] = sigmoid(self.weight_vh @ sample + self.bias_v)
-                #prob[i] = prob[i]/np.sum(prob[i])
+            prob = sigmoid(hidden_minibatch @ self.weight_vh.T + self.bias_v)
+            # for i, sample in enumerate(hidden_minibatch):
+            #     prob[i] = sigmoid(self.weight_vh @ sample + self.bias_v)
+            #     #prob[i] = prob[i]/np.sum(prob[i])
         return prob, sample_binary(prob)
 
 
