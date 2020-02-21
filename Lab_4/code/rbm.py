@@ -55,10 +55,10 @@ class RestrictedBoltzmannMachine():
         
         self.momentum = 0.7
 
-        self.print_period = 5000
+        self.print_period = 2
         
         self.rf = { # receptive-fields. Only applicable when visible layer is input data
-            "period" : 5000, # iteration period to visualize
+            "period" : 2, # iteration period to visualize
             "grid" : [5,5], # size of the grid
             "ids" : np.random.randint(0,self.ndim_hidden,25) # pick some random hidden units
             }
@@ -75,10 +75,8 @@ class RestrictedBoltzmannMachine():
           n_iterations: number of iterations of learning (each iteration learns a mini-batch)
         """
 
-        print ("learning CD1")
-        
-        n_samples = visible_trainset.shape[0]
-        x1, x2 = self.get_h_given_v(visible_trainset[:10])
+        print("learning CD1")
+
         for it in range(n_iterations):
             splits = len(visible_trainset)/self.batch_size
             tr_split = np.array_split(visible_trainset, splits)
@@ -87,6 +85,7 @@ class RestrictedBoltzmannMachine():
                 v_k, v_k_sample = self.get_v_given_h(h_0)
                 h_k, h_k_sample = self.get_h_given_v(v_k_sample)
                 self.update_params(v_minibatch, h_0, v_k, h_k)
+
 
 	    # [TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
             # you may need to use the inference functions 'get_h_given_v' and 'get_v_given_h'.
@@ -103,8 +102,9 @@ class RestrictedBoltzmannMachine():
             # print progress
             
             if it % self.print_period == 0 :
-
-                print ("iteration=%7d recon_loss=%4.4f"%(it, np.linalg.norm(visible_trainset - visible_trainset)))
+                prob, h_0 = self.get_h_given_v(visible_trainset)
+                v_k, v_k_sample = self.get_v_given_h(h_0)
+                print ("iteration=%7d recon_loss=%4.4f"%(it, np.linalg.norm(visible_trainset - v_k_sample)))
         
         return
     
