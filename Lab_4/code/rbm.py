@@ -132,9 +132,9 @@ class RestrictedBoltzmannMachine():
             self.delta_bias_v += self.learning_rate*(v_0[i] - v_k[i])
             self.delta_weight_vh += self.learning_rate*(np.outer(v_0[i], h_0[i]) - np.outer(v_k[i], h_k[i]))
             self.delta_bias_h += self.learning_rate*(h_0[i] - h_k[i])
-        self.bias_v += self.delta_bias_v
-        self.weight_vh += self.delta_weight_vh
-        self.bias_h += self.delta_bias_h
+        self.bias_v += self.delta_bias_v/v_0.shape[0]
+        self.weight_vh += self.delta_weight_vh/v_0.shape[0]
+        self.bias_h += self.delta_bias_h/v_0.shape[0]
         
         return
 
@@ -156,9 +156,8 @@ class RestrictedBoltzmannMachine():
         prob = np.zeros((n_samples, self.ndim_hidden))
         for i, sample in enumerate(visible_minibatch):
             prob[i] = sigmoid(self.weight_vh.T @ sample + self.bias_h)
-
-        # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of hidden layer (replace the zeros below) 
-        
+            #prob[i] = prob[i] / np.sum(prob[i])
+        # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of hidden layer (replace the zeros below)
         return prob, sample_binary(prob)
 
 
@@ -199,7 +198,7 @@ class RestrictedBoltzmannMachine():
             prob = np.zeros((n_samples, self.ndim_visible))
             for i, sample in enumerate(hidden_minibatch):
                 prob[i] = sigmoid(self.weight_vh @ sample + self.bias_v)
-        
+                #prob[i] = prob[i]/np.sum(prob[i])
         return prob, sample_binary(prob)
 
 
