@@ -1,7 +1,8 @@
 from util import *
 from rbm import RestrictedBoltzmannMachine
 
-class DeepBeliefNet():    
+
+class DeepBeliefNet:
 
     ''' 
     For more details : Hinton, Osindero, Teh (2006). A fast learning algorithm for deep belief nets. https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
@@ -125,38 +126,55 @@ class DeepBeliefNet():
           n_iterations: number of iterations of learning (each iteration learns a mini-batch)
         """
 
-        try :
+        try:
 
             self.loadfromfile_rbm(loc="trained_rbm",name="vis--hid")
-            self.rbm_stack["vis--hid"].untwine_weights()            
+            self.rbm_stack["vis--hid"].untwine_weights()
             
             self.loadfromfile_rbm(loc="trained_rbm",name="hid--pen")
             self.rbm_stack["hid--pen"].untwine_weights()
             
             self.loadfromfile_rbm(loc="trained_rbm",name="pen+lbl--top")        
 
-        except IOError :
+        except IOError:
 
             # [TODO TASK 4.2] use CD-1 to train all RBMs greedily
         
             print ("training vis--hid")
             """ 
             CD-1 training for vis--hid 
-            """            
-            self.savetofile_rbm(loc="trained_rbm",name="vis--hid")
+            """
+            self.rbm_stack['vis--hid'].cd1(visible_trainset=vis_trainset, n_iterations=n_iterations)
+            self.rbm_stack["vis--hid"].untwine_weights()
+            # self.savetofile_rbm(loc="trained_rbm",name="vis--hid")
 
-            print ("training hid--pen")
-            self.rbm_stack["vis--hid"].untwine_weights()            
+
+
+            print("training hid--pen")
             """ 
             CD-1 training for hid--pen 
-            """            
-            self.savetofile_rbm(loc="trained_rbm",name="hid--pen")            
+            """
 
-            print ("training pen+lbl--top")
+            _, activations_h = self.rbm_stack['vis--hid'].get_h_given_v_dir(vis_trainset)
+            _, activations_v = self.rbm_stack['vis--hid'].get_v_given_h_dir(activations_h)
+
+            self.rbm_stack['hid--pen'].cd1(activations_v, n_iterations=n_iterations)
             self.rbm_stack["hid--pen"].untwine_weights()
+            # self.savetofile_rbm(loc="trained_rbm",name="hid--pen")
+
+
+            print("training pen+lbl--top")
             """ 
             CD-1 training for pen+lbl--top 
             """
+
+            _, activations_h = self.rbm_stack['vis--hid'].get_h_given_v_dir(vis_trainset)
+            _, activations_v = self.rbm_stack['vis--hid'].get_v_given_h_dir(activations_h)
+            _, activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_v)
+            _, activations_v = self.rbm_stack['hid--pen'].get_v_given_h_dir(activations_h)
+
+            self.rbm_stack['pen+lbl--top'].cd1(activations_v, n_iterations=n_iterations)
+            # self.rbm_stack["pen+lbl--top"].untwine_weights()
             self.savetofile_rbm(loc="trained_rbm",name="pen+lbl--top")            
 
         return    

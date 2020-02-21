@@ -67,7 +67,7 @@ class RestrictedBoltzmannMachine():
 
         
     def cd1(self,visible_trainset, n_iterations=10000):
-        visible_trainset = np.random.permutation(visible_trainset)
+        # visible_trainset = np.random.permutation(visible_trainset)
         """Contrastive Divergence with k=1 full alternating Gibbs sampling
 
         Args:
