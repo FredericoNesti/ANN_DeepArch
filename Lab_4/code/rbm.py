@@ -55,10 +55,10 @@ class RestrictedBoltzmannMachine():
         
         self.momentum = 0.7
 
-        self.print_period = 2
+        self.print_period = 500
         
         self.rf = { # receptive-fields. Only applicable when visible layer is input data
-            "period" : 2, # iteration period to visualize
+            "period" : 500, # iteration period to visualize
             "grid" : [5,5], # size of the grid
             "ids" : np.random.randint(0,self.ndim_hidden,25) # pick some random hidden units
             }
@@ -76,15 +76,17 @@ class RestrictedBoltzmannMachine():
         """
 
         print("learning CD1")
-
+        splits = int(len(visible_trainset) / self.batch_size)
+        tr_split = np.array_split(visible_trainset, splits)
+        epochs = 0
         for it in range(n_iterations):
-            splits = len(visible_trainset)/self.batch_size
-            tr_split = np.array_split(visible_trainset, splits)
-            for i, v_minibatch in enumerate(tr_split):
-                prob, h_0 = self.get_h_given_v(v_minibatch)
-                v_k, v_k_sample = self.get_v_given_h(h_0)
-                h_k, h_k_sample = self.get_h_given_v(v_k_sample)
-                self.update_params(v_minibatch, h_0, v_k, h_k)
+            v_minibatch = tr_split[it % splits]
+            prob, h_0 = self.get_h_given_v(v_minibatch)
+            v_k, v_k_sample = self.get_v_given_h(h_0)
+            h_k, h_k_sample = self.get_h_given_v(v_k_sample)
+            self.update_params(v_minibatch, h_0, v_k, h_k)
+            if it % splits == 0:
+                epochs+=1
 
 
 	    # [TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
@@ -101,10 +103,10 @@ class RestrictedBoltzmannMachine():
 
             # print progress
             
-            if it % self.print_period == 0 :
-                prob, h_0 = self.get_h_given_v(visible_trainset)
+            if it % self.print_period == 0:
+                prob, h_0 = self.get_h_given_v(v_minibatch)
                 v_k, v_k_sample = self.get_v_given_h(h_0)
-                print ("iteration=%7d recon_loss=%4.4f"%(it, np.linalg.norm(visible_trainset - v_k_sample)))
+                print ("iteration=%7d, epoch=%7d recon_loss=%4.4f"%(it, epochs, np.linalg.norm(v_minibatch - v_k_sample)))
         
         return
     
