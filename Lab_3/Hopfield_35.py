@@ -102,40 +102,43 @@ patterns = np.loadtxt('pict.dat', dtype=int, delimiter=',').reshape(11, 1024)
 #
 #
 print("Degraded pattern")
-incl = 10
+incl = 300
 np.random.seed(100)
 patterns = (np.random.rand(incl, 100)>0.5)*2-1
 
-saving = np.zeros(incl+1)
-for patterns_to_include in range(0, incl+1):
-    not_att = 0
-    hp = Hopfield(patterns[:patterns_to_include])
-    np.fill_diagonal(hp.weights, 0)
-    for pat in patterns[:patterns_to_include]:
-        for j in range(30):
-            random_change = np.random.choice(pat.shape[0], 30, replace=False)
-            #random_change = []
-            test_pat = np.copy(pat)
-            for rnd in random_change:
-                test_pat[rnd] = test_pat[rnd]*(-1)
-            new_pat = hp.update_till_convergence(test_pat)
-            if np.all(new_pat == pat):
-                #print("attractor")
-                None
-            else:
-                not_att+=1
-            #print("not attractor")
-    saving[patterns_to_include] = not_att/30
-plt.plot(saving, label="zero diagonal")
+# saving = np.zeros(incl+1)
+# for patterns_to_include in range(0, incl+1):
+#     not_att = 0
+#     hp = Hopfield(patterns[:patterns_to_include])
+#     np.fill_diagonal(hp.weights, 0)
+#     for pat in patterns[:patterns_to_include]:
+#         for j in range(1):
+#             random_change = np.random.choice(pat.shape[0], 30, replace=False)
+#             random_change = []
+#             test_pat = np.copy(pat)
+#             for rnd in random_change:
+#                 test_pat[rnd] = test_pat[rnd]*(-1)
+#             new_pat = hp.update_till_convergence(test_pat)
+#             if np.all(new_pat == pat):
+#                 #print("attractor")
+#                 None
+#             else:
+#                 not_att+=1
+#             #print("not attractor")
+#     saving[patterns_to_include] = not_att/1
+fig, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+#ax1.plot(saving, label="zero diagonal", color='b')
+#ax2.plot(saving/np.array(range(1, len(saving)+1)), color='b')
 
 saving = np.zeros(incl+1)
 for patterns_to_include in range(0, incl+1):
     not_att = 0
     hp = Hopfield(patterns[:patterns_to_include])
     for pat in patterns[:patterns_to_include]:
-        for j in range(30):
+        for j in range(1):
             random_change = np.random.choice(pat.shape[0], 30, replace=False)
-            # random_change = []
+            random_change = []
             test_pat = np.copy(pat)
             for rnd in random_change:
                 test_pat[rnd] = test_pat[rnd] * (-1)
@@ -146,11 +149,13 @@ for patterns_to_include in range(0, incl+1):
             else:
                 not_att += 1
             # print("not attractor")
-    saving[patterns_to_include] = not_att / 30
-plt.plot(saving, label="standard")
-plt.legend()
-plt.xlabel("Number of images stored")
-plt.ylabel("Number of wrongly converged points")
+    saving[patterns_to_include] = not_att / 1
+ax1.plot(saving, color='g')
+ax2.plot(saving/np.array(range(1, len(saving)+1)), color='b')
+#ax1.legend()
+ax1.set_xlabel("Number of images stored")
+ax1.set_ylabel("Number of wrongly converged points", color='g')
+ax2.set_ylabel("Number of wrongly converged points (percentage)", color='b')
 plt.show()
 
 incl = 10

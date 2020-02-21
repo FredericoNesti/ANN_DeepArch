@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import norm
 
 
 class RbfTransformation:
@@ -13,14 +14,26 @@ class RbfTransformation:
         return ans
         #return np.exp(-(np.inner(inp - self.means, inp - self.means))/self.sigmas/2)
 
-    def train_mu(self, data, step, epochs, winners=1):
+    def train_mu(self, data, step, epochs):
         for epoch in range(epochs):
-            for sample in np.random.choice(data, len(data)):
+            for sample in data[np.random.choice(len(data), len(data))]:
+            #for sample in data:
                 distances = np.zeros(len(self.means))
                 for i in range(len(self.means)):
-                    distances[i] = np.linalg.norm(sample-self.means[i])
-                for i in np.argsort(distances)[:winners]:
-                    self.means[i] += step*(sample-self.means[i])
+                    distances[i] = np.linalg.norm(sample-self.means[i])**2
+                best = np.argmin(distances)
+                self.means[best] += step * (sample - self.means[best])
+
+    def train_mu_fsca(self, data, step, epochs):
+        winners = np.ones(len(self.means))
+        for epoch in range(epochs):
+            for sample in data[np.random.choice(len(data), len(data))]:
+                distances = np.zeros(len(self.means))
+                for i in range(len(self.means)):
+                    distances[i] = np.linalg.norm(sample - self.means[i])*winners[i]
+                best = np.argmin(distances)
+                self.means[best] += step * (sample - self.means[best])
+                winners[best]+=1
 
 
 class StepTransformation:
@@ -161,15 +174,15 @@ class NN:
             if learning_curve:
                 error = 0
                 for s, t in zip(inputs, targets):
-                    error += np.abs(self.feed_forward(s)[1][0]-t)
+                    error += np.abs(self.feed_forward(s)[1]-t)
                 error = error/len(inputs)
                 training_error.append(error)
             error = 0
             if test_set is not None:
                 for s, t in zip(test_set, test_targets):
-                    error += np.abs(self.feed_forward(s)[1][0]-t)
+                    error += np.abs(self.feed_forward(s)[1]-t)
                 error = error / len(test_set)
                 test_error.append(error)
-        return training_error, test_error
+        return np.array(training_error), np.array(test_error)
 
 

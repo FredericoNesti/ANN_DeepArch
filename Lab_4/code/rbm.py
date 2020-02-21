@@ -130,8 +130,9 @@ class RestrictedBoltzmannMachine():
         # [TODO TASK 4.1] get the gradients from the arguments (replace the 0s below) and update the weight and bias parameters
         self.delta_bias_v = np.mean(self.learning_rate * (v_0 - v_k), axis=0)
         self.delta_bias_h = np.mean(self.learning_rate * (h_0 - h_k), axis=0)
-        for i in range(v_0.shape[0]):
-            self.delta_weight_vh += self.learning_rate*(np.outer(v_0[i], h_0[i]) - np.outer(v_k[i], h_k[i]))
+        self.delta_weight_vh = self.learning_rate*(v_0.T@h_0 - v_k.T@h_k)
+        #for i in range(v_0.shape[0]):
+        #    self.delta_weight_vh += self.learning_rate*(np.outer(v_0[i], h_0[i]) - np.outer(v_k[i], h_k[i]))
         self.bias_v += self.delta_bias_v
         self.weight_vh += self.delta_weight_vh/v_0.shape[0]
         self.bias_h += self.delta_bias_h
