@@ -103,7 +103,7 @@ class DeepBeliefNet:
         fig, ax = plt.subplots(1,1,figsize=(3,3))
         plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
         ax.set_xticks([]); ax.set_yticks([])
-        top_hidden_layer = self.distribution_of_top_hidden.reshape(1,-1) # need to make it for more rows if multiline sample inserted
+        top_hidden_layer = self.distribution_of_top_hidden.reshape(1, -1) # need to make it for more rows if multiline sample inserted
         lbl = true_lbl
 
         # [TODO TASK 4.2] fix the label in the label layer and run alternating Gibbs sampling in the top RBM. From the top RBM, drive the network \ 
@@ -112,8 +112,8 @@ class DeepBeliefNet:
         for _ in range(self.n_gibbs_gener):
             layer_with_labels = np.hstack((top_hidden_layer, lbl))
             hidden_layer = self.rbm_stack['pen+lbl--top'].get_h_given_v(layer_with_labels)[1]
-            top_hidden_layer = self.rbm_stack['pen+lbl--top'].get_v_given_h(hidden_layer)[0][:, :-lbl.shape[1]]
-            activations_h = self.rbm_stack['hid--pen'].get_v_given_h_dir(top_hidden_layer)[0]
+            top_hidden_layer = self.rbm_stack['pen+lbl--top'].get_v_given_h(hidden_layer)[1][:, :-lbl.shape[1]]
+            activations_h = self.rbm_stack['hid--pen'].get_v_given_h_dir(top_hidden_layer)[1]
             vis = self.rbm_stack['vis--hid'].get_v_given_h_dir(activations_h)[1]
             
             records.append( [ ax.imshow(vis.reshape(self.image_size), cmap="bwr", vmin=0, vmax=1, animated=True, interpolation=None) ] )
