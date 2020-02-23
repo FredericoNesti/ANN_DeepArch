@@ -50,6 +50,8 @@ class DeepBeliefNet:
         self.n_gibbs_wakesleep = 5
 
         self.print_period = 2000
+
+        self.distribution_of_top_hidden = None
         
         return
 
@@ -67,16 +69,20 @@ class DeepBeliefNet:
         vis = true_img # visible layer gets the image data
         
         lbl = np.ones(true_lbl.shape)/10. # start the net by telling you know nothing about labels        
-        
+        activations_h = self.rbm_stack['vis--hid'].get_h_given_v_dir(vis)[1]
+        activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_h)[1]
+        start_input = np.hstack((activations_h, lbl))
+        activations_h = None  # saving some memory
         # [TODO TASK 4.2] fix the image data in the visible layer and drive the network bottom to top. In the top RBM, run alternating Gibbs sampling \
         # and read out the labels (replace pass below and 'predicted_lbl' to your predicted labels).
         # NOTE : inferring entire train/test set may require too much compute memory (depends on your system). In that case, divide into mini-batches.
-        
+        print("recognize loop")
         for _ in range(self.n_gibbs_recog):
+            hidden_layer = self.rbm_stack['pen+lbl--top'].get_h_given_v(start_input)[1]
+            start_input = self.rbm_stack['pen+lbl--top'].get_v_given_h(hidden_layer)[1]
+            print("gips iteration", _)
 
-            pass
-
-        predicted_lbl = np.zeros(true_lbl.shape)
+        predicted_lbl = start_input[:, -true_lbl.shape[1]:]
             
         print ("accuracy = %.2f%%"%(100.*np.mean(np.argmax(predicted_lbl,axis=1)==np.argmax(true_lbl,axis=1))))
         
@@ -97,18 +103,21 @@ class DeepBeliefNet:
         fig,ax = plt.subplots(1,1,figsize=(3,3))
         plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
         ax.set_xticks([]); ax.set_yticks([])
-
+        top_hidden_layer = self.distribution_of_top_hidden.reshape(1,-1) # need to make it for more rows if multiline sample inserted
         lbl = true_lbl
 
         # [TODO TASK 4.2] fix the label in the label layer and run alternating Gibbs sampling in the top RBM. From the top RBM, drive the network \ 
         # top to the bottom visible layer (replace 'vis' from random to your generated visible layer).
             
         for _ in range(self.n_gibbs_gener):
-
-            vis = np.random.rand(n_sample,self.sizes["vis"])
+            layer_with_labels = np.hstack((top_hidden_layer, lbl))
+            hidden_layer = self.rbm_stack['pen+lbl--top'].get_h_given_v(layer_with_labels)[1]
+            top_hidden_layer = self.rbm_stack['pen+lbl--top'].get_v_given_h(hidden_layer)[1][:, :-lbl.shape[1]]
+            activations_h = self.rbm_stack['hid--pen'].get_v_given_h_dir(top_hidden_layer)[1]
+            vis = self.rbm_stack['vis--hid'].get_v_given_h_dir(activations_h)[1]
             
             records.append( [ ax.imshow(vis.reshape(self.image_size), cmap="bwr", vmin=0, vmax=1, animated=True, interpolation=None) ] )
-            
+        print("video created")
         anim = stitch_video(fig,records).save("%s.generate%d.mp4"%(name,np.argmax(true_lbl)))            
             
         return
@@ -127,7 +136,7 @@ class DeepBeliefNet:
         """
 
         try:
-
+            self.distribution_of_top_hidden = np.load("trained_rbm/distribution_of_top_hidden.npy")
             self.loadfromfile_rbm(loc="trained_rbm",name="vis--hid")
             self.rbm_stack["vis--hid"].untwine_weights()
             
@@ -145,6 +154,7 @@ class DeepBeliefNet:
             CD-1 training for vis--hid 
             """
             self.rbm_stack['vis--hid'].cd1(visible_trainset=vis_trainset, n_iterations=n_iterations)
+            self.savetofile_rbm(loc="trained_rbm", name="vis--hid")
             self.rbm_stack["vis--hid"].untwine_weights()
 
 
@@ -157,6 +167,7 @@ class DeepBeliefNet:
             _, activations_h = self.rbm_stack['vis--hid'].get_h_given_v_dir(vis_trainset)
 
             self.rbm_stack['hid--pen'].cd1(activations_h, n_iterations=n_iterations)
+            self.savetofile_rbm(loc="trained_rbm", name="hid--pen")
             self.rbm_stack["hid--pen"].untwine_weights()
 
 
@@ -169,9 +180,9 @@ class DeepBeliefNet:
             _, activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_h)
             full_activations = np.hstack((activations_h, lbl_trainset))
             self.rbm_stack['pen+lbl--top'].cd1(full_activations, n_iterations=n_iterations)
-            self.savetofile_rbm(loc="trained_rbm", name="vis--hid")
-            self.savetofile_rbm(loc="trained_rbm", name="hid--pen")
-            self.savetofile_rbm(loc="trained_rbm",name="pen+lbl--top")            
+            self.savetofile_rbm(loc="trained_rbm",name="pen+lbl--top")
+            self.distribution_of_top_hidden = np.mean(_, axis=0)
+            np.save("trained_rbm/distribution_of_top_hidden.npy", self.distribution_of_top_hidden)
 
         return    
 
@@ -227,9 +238,9 @@ class DeepBeliefNet:
     
     def loadfromfile_rbm(self,loc,name):
         
-        self.rbm_stack[name].weight_vh = np.load("%s/rbm.%s.weight_vh.npy"%(loc,name))
-        self.rbm_stack[name].bias_v    = np.load("%s/rbm.%s.bias_v.npy"%(loc,name))
-        self.rbm_stack[name].bias_h    = np.load("%s/rbm.%s.bias_h.npy"%(loc,name))
+        self.rbm_stack[name].weight_vh = np.load("%s/rbm.%s.weight_vh.npy"%(loc,name), allow_pickle=True)
+        self.rbm_stack[name].bias_v    = np.load("%s/rbm.%s.bias_v.npy"%(loc,name), allow_pickle=True)
+        self.rbm_stack[name].bias_h    = np.load("%s/rbm.%s.bias_h.npy"%(loc,name), allow_pickle=True)
         print ("loaded rbm[%s] from %s"%(name,loc))
         return
         
@@ -242,10 +253,10 @@ class DeepBeliefNet:
     
     def loadfromfile_dbn(self,loc,name):
         
-        self.rbm_stack[name].weight_v_to_h = np.load("%s/dbn.%s.weight_v_to_h.npy"%(loc,name))
-        self.rbm_stack[name].weight_h_to_v = np.load("%s/dbn.%s.weight_h_to_v.npy"%(loc,name))
-        self.rbm_stack[name].bias_v        = np.load("%s/dbn.%s.bias_v.npy"%(loc,name))
-        self.rbm_stack[name].bias_h        = np.load("%s/dbn.%s.bias_h.npy"%(loc,name))
+        self.rbm_stack[name].weight_v_to_h = np.load("%s/dbn.%s.weight_v_to_h.npy"%(loc,name), allow_pickle=True)
+        self.rbm_stack[name].weight_h_to_v = np.load("%s/dbn.%s.weight_h_to_v.npy"%(loc,name), allow_pickle=True)
+        self.rbm_stack[name].bias_v        = np.load("%s/dbn.%s.bias_v.npy"%(loc,name), allow_pickle=True)
+        self.rbm_stack[name].bias_h        = np.load("%s/dbn.%s.bias_h.npy"%(loc,name), allow_pickle=True)
         print ("loaded rbm[%s] from %s"%(name,loc))
         return
         

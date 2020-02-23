@@ -2,3 +2,13 @@
 **/.idea/
 ./idea
 
+
+Lab_3/__pycache__/
+
+Lab_4/code/__pycache__/
+
+NN/.ipynb_checkpoints/
+
+Lab_4/code/rbm_copy.py
+
+Lab_4/code/run_copy.py
