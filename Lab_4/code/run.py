@@ -1,6 +1,7 @@
 from util import *
 from rbm import RestrictedBoltzmannMachine 
-from dbn import DeepBeliefNet
+# from dbn import DeepBeliefNet
+from dbn_all_prob import DeepBeliefNet
 
 if __name__ == "__main__":
 
@@ -35,10 +36,10 @@ if __name__ == "__main__":
     ''' greedy layer-wise training '''
 
     dbn.train_greedylayerwise(vis_trainset=train_imgs, lbl_trainset=train_lbls, n_iterations=120000)
-
-    dbn.recognize(train_imgs, train_lbls)
     #
-    dbn.recognize(test_imgs, test_lbls)
+    # dbn.recognize(train_imgs, train_lbls)
+    # #
+    # dbn.recognize(test_imgs, test_lbls)
     #
     for digit in range(10):
         digit_1hot = np.zeros(shape=(1,10))
