@@ -103,12 +103,16 @@ class RestrictedBoltzmannMachine():
         self.delta_bias_h = np.zeros(self.bias_h.shape)
         
         # [DONE TASK 4.1] get the gradients from the arguments (replace the 0s below) and update the weight and bias parameters
-        self.delta_bias_v = np.mean(self.learning_rate * (v_0 - v_k), axis=0)
-        self.delta_bias_h = np.mean(self.learning_rate * (h_0 - h_k), axis=0)
+        #self.delta_bias_v = np.mean(self.learning_rate * (v_0 - v_k), axis=0)
+        #self.delta_bias_h = np.mean(self.learning_rate * (h_0 - h_k), axis=0)
+        self.delta_bias_v = np.mean((v_0 - v_k), axis=0)
+        self.delta_bias_h = np.mean((h_0 - h_k), axis=0)
         self.delta_weight_vh = self.learning_rate*(v_0.T@h_0 - v_k.T@h_k)
         
-        self.bias_v += self.delta_bias_v
-        self.bias_h += self.delta_bias_h
+        #self.bias_v += self.delta_bias_v
+        #self.bias_h += self.delta_bias_h
+        self.bias_v += self.learning_rate*self.delta_bias_v
+        self.bias_h += self.learning_rate*self.delta_bias_h        
         self.weight_vh += self.delta_weight_vh/v_0.shape[0]
         
         return
@@ -195,10 +199,17 @@ class RestrictedBoltzmannMachine():
         n_samples = visible_minibatch.shape[0]
 
         # [DONE TASK 4.2] perform same computation as the function 'get_h_given_v' but with directed connections (replace the zeros below) 
-        prob = sigmoid(visible_minibatch @ self.weight_v_to_h + self.bias_h)
+        
+        print(visible_minibatch.shape)
+        print(self.weight_v_to_h.shape)
+        print(self.bias_h.shape)
+        
+        print((visible_minibatch @ self.weight_v_to_h + self.bias_h.T).shape)
+        
+        prob = sigmoid( visible_minibatch @ self.weight_v_to_h + self.bias_h.T)
         sample = sample_binary(prob)
-        return prob, sample
-        #return prob, (prob > 0.5)*1
+        #return prob, sample
+        return prob, (prob > 0.5)*1
 
     def get_v_given_h_dir(self,hidden_minibatch):
         """Compute probabilities p(v|h) and activations v ~ p(v|h)
@@ -238,8 +249,8 @@ class RestrictedBoltzmannMachine():
             # [DONE TASK 4.2] performs same computaton as the function 'get_v_given_h' but with directed connections (replace the pass and zeros below)             
             prob = sigmoid(hidden_minibatch @ self.weight_h_to_v.T + self.bias_v)      
             sample = sample_binary(prob)
-        return prob, sample
-        #return prob, (prob > 0.5)*1
+        #return prob, sample
+        return prob, (prob > 0.5)*1
         
     def update_generate_params(self,inps,trgs,preds):
         """Update generative weight "weight_h_to_v" and bias "bias_v"
@@ -251,10 +262,10 @@ class RestrictedBoltzmannMachine():
            all args have shape (size of mini-batch, size of respective layer)
         """
 
-        # [DONE? TASK 4.3] find the gradients from the arguments (replace the 0s below) and update the weight and bias parameters.
+        # [DONE TASK 4.3] find the gradients from the arguments (replace the 0s below) and update the weight and bias parameters.
         
-        self.delta_weight_h_to_v += inps*(trgs-preds)
-        self.delta_bias_v += (trgs-preds)
+        self.delta_weight_h_to_v += np.mean(inps*(trgs-preds),axis=0)
+        self.delta_bias_v += np.mean((trgs-preds),axis=0)
         
         self.weight_h_to_v += self.learning_rate*self.delta_weight_h_to_v
         self.bias_v += self.learning_rate*self.delta_bias_v 
@@ -271,12 +282,12 @@ class RestrictedBoltzmannMachine():
            all args have shape (size of mini-batch, size of respective layer)
         """
 
-        # [TODO TASK 4.3] find the gradients from the arguments (replace the 0s below) and update the weight and bias parameters.
+        # [DONE TASK 4.3] find the gradients from the arguments (replace the 0s below) and update the weight and bias parameters.
 
-        self.delta_weight_v_to_h += 0
-        self.delta_bias_h += 0
+        self.delta_weight_v_to_h += np.mean(inps*(trgs-preds),axis=0)
+        self.delta_bias_h += np.mean((trgs-preds),axis=0)
 
-        self.weight_v_to_h += self.delta_weight_v_to_h
-        self.bias_h += self.delta_bias_h
+        self.weight_v_to_h += self.learning_rate*self.delta_weight_v_to_h
+        self.bias_h += self.learning_rate*self.delta_bias_h
         
         return    
