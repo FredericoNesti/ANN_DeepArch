@@ -198,6 +198,7 @@ class RestrictedBoltzmannMachine():
         prob = sigmoid(visible_minibatch @ self.weight_v_to_h + self.bias_h)
         sample = sample_binary(prob)
         return prob, sample
+        #return prob, (prob > 0.5)*1
 
     def get_v_given_h_dir(self,hidden_minibatch):
         """Compute probabilities p(v|h) and activations v ~ p(v|h)
@@ -238,6 +239,7 @@ class RestrictedBoltzmannMachine():
             prob = sigmoid(hidden_minibatch @ self.weight_h_to_v.T + self.bias_v)      
             sample = sample_binary(prob)
         return prob, sample
+        #return prob, (prob > 0.5)*1
         
     def update_generate_params(self,inps,trgs,preds):
         """Update generative weight "weight_h_to_v" and bias "bias_v"
@@ -249,13 +251,13 @@ class RestrictedBoltzmannMachine():
            all args have shape (size of mini-batch, size of respective layer)
         """
 
-        # [TODO TASK 4.3] find the gradients from the arguments (replace the 0s below) and update the weight and bias parameters.
+        # [DONE? TASK 4.3] find the gradients from the arguments (replace the 0s below) and update the weight and bias parameters.
         
-        self.delta_weight_h_to_v += 0
-        self.delta_bias_v += 0
+        self.delta_weight_h_to_v += inps*(trgs-preds)
+        self.delta_bias_v += (trgs-preds)
         
-        self.weight_h_to_v += self.delta_weight_h_to_v
-        self.bias_v += self.delta_bias_v 
+        self.weight_h_to_v += self.learning_rate*self.delta_weight_h_to_v
+        self.bias_v += self.learning_rate*self.delta_bias_v 
         
         return
     
