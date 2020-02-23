@@ -217,36 +217,36 @@ class DeepBeliefNet:
                 prob, activations_h = self.rbm_stack['vis--hid'].get_h_given_v_dir(vis_trainset)
                 prob, activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(prob)
 
-                # [TODO TASK 4.3] alternating Gibbs sampling in the top RBM for k='n_gibbs_wakesleep' steps, also store neccessary information for learning this RBM.
-                top_hidden_layer = self.distribution_of_top_hidden.reshape(1, -1)  # need to make it for more rows if multiline sample inserted
-                lbl = lbl_trainset
-
-                for _ in range(self.n_gibbs_gener):
-                    layer_with_labels = np.hstack((top_hidden_layer, lbl))
+                # [TODO TASK 4.3] alternating Gibbs sampling in the top RBM for k='n_gibbs_wakesleep' steps, also store
+                #  neccessary information for learning this RBM.
+                print("hello1")
+                # for _ in range(self.n_gibbs_gener):
+                for _ in range(2):
+                    layer_with_labels = np.hstack((activations_h, lbl_trainset))
                     hidden_layer = self.rbm_stack['pen+lbl--top'].get_h_given_v(layer_with_labels)[1]
-                    top_hidden_layer = self.rbm_stack['pen+lbl--top'].get_v_given_h(hidden_layer)[1][:, :-lbl.shape[1]]
-                    activations_h = self.rbm_stack['hid--pen'].get_v_given_h_dir(top_hidden_layer)[1]
-                    vis = self.rbm_stack['vis--hid'].get_v_given_h_dir(activations_h)[1]
-
+                    activations_h = self.rbm_stack['pen+lbl--top'].get_v_given_h(hidden_layer)[1][:, :-lbl_trainset.shape[1]]
+                print("hello2")
+                activation_final_layer = activations_h
                 # [TODO TASK 4.3] sleep phase : from the activities in the top RBM, drive the network top to bottom.
-                prob, activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(vis)
+                prob, activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_h)
                 prob, activations_h = self.rbm_stack['vis--hid'].get_h_given_v_dir(activations_h)
 
-                # [TODO TASK 4.3] compute predictions : compute generative predictions from wake-phase activations, and recognize predictions from sleep-phase activations.
-                # Note that these predictions will not alter the network activations, we use them only to learn the directed connections.
+                # [TODO TASK 4.3] compute predictions : compute generative predictions from wake-phase activations, and
+                #  recognize predictions from sleep-phase activations.
+                #  Note that these predictions will not alter the network activations, we use them only to learn the directed connections.
                 activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_h)[1]
-                start_input = np.hstack((activations_h, lbl))
+                preds = activation_final_layer[:, -lbl_trainset.shape[1]:]
 
                 # [TODO TASK 4.3] update generative parameters : here you will only use 'update_generate_params' method from rbm class.
-                self.rbm_stack['hid--pen'].update_generate_params(inps, trgs, preds)
-                self.rbm_stack['vis--hid'].update_generate_params(inps, trgs, preds)
+                self.rbm_stack['hid--pen'].update_generate_params(vis_trainset, lbl_trainset, preds)
+                self.rbm_stack['vis--hid'].update_generate_params(vis_trainset, lbl_trainset, preds)
 
                 # [TODO TASK 4.3] update parameters of top rbm : here you will only use 'update_params' method from rbm class.
-                self.rbm_stack['hid--pen'].update_recognize_params(inps, trgs, preds)
-                self.rbm_stack['vis--hid'].update_recognize_params(inps, trgs, preds)
+                self.rbm_stack['pen+lbl--top'].update_recognize_params(vis_trainset, lbl_trainset, preds)
 
                 # [TODO TASK 4.3] update generative parameters : here you will only use 'update_recognize_params' method from rbm class.
-                self.rbm_stack['pen+lbl--top'].update_generate_params(inps, trgs, preds)
+                self.rbm_stack['hid--pen'].update_recognize_params(vis_trainset, lbl_trainset, preds)
+                self.rbm_stack['vis--hid'].update_recognize_params(vis_trainset, lbl_trainset, preds)
 
                 if it % self.print_period == 0: print("iteration=%7d" % it)
 
