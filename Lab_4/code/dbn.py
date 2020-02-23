@@ -88,7 +88,7 @@ class DeepBeliefNet:
         
         return
 
-    def generate(self,true_lbl,name):
+    def generate(self, true_lbl, name):
         
         """Generate data from labels
 
@@ -100,7 +100,7 @@ class DeepBeliefNet:
         n_sample = true_lbl.shape[0]
         
         records = []        
-        fig,ax = plt.subplots(1,1,figsize=(3,3))
+        fig, ax = plt.subplots(1,1,figsize=(3,3))
         plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
         ax.set_xticks([]); ax.set_yticks([])
         top_hidden_layer = self.distribution_of_top_hidden.reshape(1,-1) # need to make it for more rows if multiline sample inserted
@@ -180,7 +180,7 @@ class DeepBeliefNet:
             _, activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_h)
             full_activations = np.hstack((activations_h, lbl_trainset))
             self.rbm_stack['pen+lbl--top'].cd1(full_activations, n_iterations=n_iterations)
-            self.savetofile_rbm(loc="trained_rbm",name="pen+lbl--top")
+            self.savetofile_rbm(loc="trained_rbm", name="pen+lbl--top")
             self.distribution_of_top_hidden = np.mean(_, axis=0)
             np.save("trained_rbm/distribution_of_top_hidden.npy", self.distribution_of_top_hidden)
 

@@ -242,7 +242,7 @@ class RestrictedBoltzmannMachine():
         # [TODO TASK 4.2] perform same computation as the function 'get_h_given_v' but with directed connections (replace the zeros below)
         prob = sigmoid(visible_minibatch @ self.weight_v_to_h + self.bias_h)
         
-        return prob, sample_binary(prob)
+        return prob, (prob > 0.5)*1
 
 
     def get_v_given_h_dir(self,hidden_minibatch):
@@ -283,7 +283,7 @@ class RestrictedBoltzmannMachine():
             # [TODO TASK 4.2] performs same computaton as the function 'get_v_given_h' but with directed connections (replace the pass and zeros below)             
             prob = sigmoid(hidden_minibatch @ self.weight_h_to_v + self.bias_v)
             
-        return prob, sample_binary(prob)
+        return prob, (prob > 0.5)*1
         
     def update_generate_params(self,inps,trgs,preds):
         
