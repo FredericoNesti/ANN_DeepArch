@@ -228,13 +228,13 @@ class DeepBeliefNet:
                 print("hello2")
                 activation_final_layer = activations_h
                 # [TODO TASK 4.3] sleep phase : from the activities in the top RBM, drive the network top to bottom.
-                prob, activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_h)
-                prob, activations_h = self.rbm_stack['vis--hid'].get_h_given_v_dir(activations_h)
+                prob, activations_h = self.rbm_stack['hid--pen'].get_v_given_h_dir(activations_h)
+                prob, activations_h = self.rbm_stack['vis--hid'].get_v_given_h_dir(activations_h)
 
                 # [TODO TASK 4.3] compute predictions : compute generative predictions from wake-phase activations, and
                 #  recognize predictions from sleep-phase activations.
                 #  Note that these predictions will not alter the network activations, we use them only to learn the directed connections.
-                activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_h)[1]
+                # activations_h = self.rbm_stack['hid--pen'].get_h_given_v_dir(activations_h)[1]
                 preds = activation_final_layer[:, -lbl_trainset.shape[1]:]
 
                 # [TODO TASK 4.3] update generative parameters : here you will only use 'update_generate_params' method from rbm class.
