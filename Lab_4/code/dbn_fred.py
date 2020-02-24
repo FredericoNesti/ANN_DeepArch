@@ -1,6 +1,6 @@
 from util import *
-from rbm import RestrictedBoltzmannMachine
-
+from rbm_fred import RestrictedBoltzmannMachine
+from tqdm import tqdm
 
 class DeepBeliefNet:
 
@@ -29,7 +29,7 @@ class DeepBeliefNet:
             
             'vis--hid' : RestrictedBoltzmannMachine(ndim_visible=sizes["vis"], ndim_hidden=sizes["hid"],
                                                     is_bottom=True, image_size=image_size, batch_size=batch_size),
-            
+
             'hid--pen' : RestrictedBoltzmannMachine(ndim_visible=sizes["hid"], ndim_hidden=sizes["pen"], batch_size=batch_size),
             
             'pen+lbl--top' : RestrictedBoltzmannMachine(ndim_visible=sizes["pen"]+sizes["lbl"], ndim_hidden=sizes["top"],
@@ -205,15 +205,15 @@ class DeepBeliefNet:
 
             self.n_samples = vis_trainset.shape[0]
 
-            print('checkpoint start')
-            for it in range(n_iterations):            
+            # print('checkpoint start')
+            for it in tqdm(range(n_iterations)):
                 
-                print('checkpoint 1')
+                # print('checkpoint 1')
                 # [TODO TASK 4.3] wake-phase : drive the network bottom to top using fixing the visible and label data.
                 prob_wk_hid, activ_wk_hid = self.rbm_stack['vis--hid'].get_h_given_v_dir(vis_trainset)
                 prob_wk_pen, activ_wk_pen = self.rbm_stack['hid--pen'].get_h_given_v_dir(prob_wk_hid)
                 
-                print('checkpoint 2')
+                # print('checkpoint 2')
                 # [TODO TASK 4.3] alternating Gibbs sampling in the top RBM for k='n_gibbs_wakesleep' steps, also store neccessary information for learning this RBM.
                 activ_slp_pen = np.copy(activ_wk_pen)
                 for _ in range(self.n_gibbs_wakesleep):
@@ -221,35 +221,38 @@ class DeepBeliefNet:
                     activ_hid_top = self.rbm_stack['pen+lbl--top'].get_h_given_v(pen_plus_lbl)[1]
                     if _==0:
                         h0 = np.copy(activ_hid_top)
+                    vk = self.rbm_stack['pen+lbl--top'].get_v_given_h(activ_hid_top)[1]
                     activ_slp_pen = self.rbm_stack['pen+lbl--top'].get_v_given_h(activ_hid_top)[1][:, :-lbl_trainset.shape[1]]
                 
-                print('checkpoint 3')
+                # print('checkpoint 3')
                 # [TODO TASK 4.3] sleep phase : from the activities in the top RBM, drive the network top to bottom.
                 prob_slp_hid, activ_slp_hid = self.rbm_stack['hid--pen'].get_v_given_h_dir(activ_slp_pen)
                 prob_slp_vis, activ_slp_vis = self.rbm_stack['vis--hid'].get_v_given_h_dir(activ_slp_hid)
                 
-                print('checkpoint 4 == null')
+                # print('checkpoint 4 == null')
                 # [TODO TASK 4.3] compute predictions : compute generative predictions from wake-phase activations, and recognize predictions from sleep-phase activations.
                 # Note that these predictions will not alter the network activations, we use them only to learn the directed connections.
                 #pred_class = 
                 
                 # MISSING
                 
-                print('checkpoint 5')
+                # print('checkpoint 5')
                 # [TODO TASK 4.3] update generative parameters : here you will only use 'update_generate_params' method from rbm class.
                 self.rbm_stack['hid--pen'].update_generate_params(activ_slp_pen, activ_slp_hid, activ_wk_hid)
                 self.rbm_stack['vis--hid'].update_generate_params(activ_slp_hid, activ_slp_vis, vis_trainset)
                 
-                print('checkpoint 6')
+                # print('checkpoint 6')
                 # [TODO TASK 4.3] update parameters of top rbm : here you will only use 'update_params' method from rbm class.
-                self.rbm_stack['pen+lbl--top'].update_params(activ_wk_pen[:, :-lbl_trainset.shape[1]],h0,activ_slp_pen,activ_hid_top)
-                
-                print('checkpoint 7')
-                # [TODO TASK 4.3] update generative parameters : here you will only use 'update_recognize_params' method from rbm class.
-                self.rbm_stack['vis--hid'].update_recog_params(vis_trainset, activ_wk_hid, activ_slp_hid)
-                self.rbm_stack['hid--pen'].update_recog_params(activ_wk_hid, activ_wk_pen, activ_slp_pen)
+                v0 = np.hstack((activ_wk_pen,lbl_trainset))
+                hk = activ_hid_top
+                self.rbm_stack['pen+lbl--top'].update_params(v0, h0, vk, hk)
 
-                print('checkpoint fim')
+                # print('checkpoint 7')
+                # [TODO TASK 4.3] update generative parameters : here you will only use 'update_recognize_params' method from rbm class.
+                self.rbm_stack['vis--hid'].update_recognize_params(vis_trainset, activ_wk_hid, activ_slp_hid)
+                self.rbm_stack['hid--pen'].update_recognize_params(activ_wk_hid, activ_wk_pen, activ_slp_pen)
+
+                # print('checkpoint fim')
 
                 if it % self.print_period == 0 : print ("iteration=%7d"%it)
                         

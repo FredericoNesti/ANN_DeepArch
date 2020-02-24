@@ -262,11 +262,6 @@ class RestrictedBoltzmannMachine():
         self.delta_bias_v += np.ones((1,inps.shape[0]))@(trgs-preds)/inps.shape[0]
         #self.delta_bias_v += np.mean((trgs-preds),axis=0)
         
-        print(self.delta_weight_h_to_v.shape)
-        print(self.delta_bias_v.shape)
-        print(self.bias_v.shape)
-        
-        
         self.weight_h_to_v += self.learning_rate*self.delta_weight_h_to_v
         self.bias_v += self.learning_rate*self.delta_bias_v[0,:]
         
