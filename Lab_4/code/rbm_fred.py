@@ -198,14 +198,7 @@ class RestrictedBoltzmannMachine():
         assert self.weight_v_to_h is not None
         n_samples = visible_minibatch.shape[0]
 
-        # [DONE TASK 4.2] perform same computation as the function 'get_h_given_v' but with directed connections (replace the zeros below) 
-        
-        print(visible_minibatch.shape)
-        print(self.weight_v_to_h.shape)
-        print(self.bias_h.shape)
-        
-        print((visible_minibatch @ self.weight_v_to_h + self.bias_h.T).shape)
-        
+        # [DONE TASK 4.2] perform same computation as the function 'get_h_given_v' but with directed connections (replace the zeros below)         
         prob = sigmoid( visible_minibatch @ self.weight_v_to_h + self.bias_h.T)
         sample = sample_binary(prob)
         #return prob, sample
@@ -247,7 +240,7 @@ class RestrictedBoltzmannMachine():
         else:
                         
             # [DONE TASK 4.2] performs same computaton as the function 'get_v_given_h' but with directed connections (replace the pass and zeros below)             
-            prob = sigmoid(hidden_minibatch @ self.weight_h_to_v.T + self.bias_v)      
+            prob = sigmoid(hidden_minibatch @ self.weight_h_to_v + self.bias_v.T)      
             sample = sample_binary(prob)
         #return prob, sample
         return prob, (prob > 0.5)*1
@@ -264,11 +257,18 @@ class RestrictedBoltzmannMachine():
 
         # [DONE TASK 4.3] find the gradients from the arguments (replace the 0s below) and update the weight and bias parameters.
         
-        self.delta_weight_h_to_v += np.mean(inps*(trgs-preds),axis=0)
-        self.delta_bias_v += np.mean((trgs-preds),axis=0)
+        #self.delta_weight_h_to_v += np.mean(inps*(trgs-preds),axis=0)
+        self.delta_weight_h_to_v += inps.T @ (trgs-preds)/inps.shape[0]
+        self.delta_bias_v += np.ones((1,inps.shape[0]))@(trgs-preds)/inps.shape[0]
+        #self.delta_bias_v += np.mean((trgs-preds),axis=0)
+        
+        print(self.delta_weight_h_to_v.shape)
+        print(self.delta_bias_v.shape)
+        print(self.bias_v.shape)
+        
         
         self.weight_h_to_v += self.learning_rate*self.delta_weight_h_to_v
-        self.bias_v += self.learning_rate*self.delta_bias_v 
+        self.bias_v += self.learning_rate*self.delta_bias_v[0,:]
         
         return
     
@@ -284,10 +284,10 @@ class RestrictedBoltzmannMachine():
 
         # [DONE TASK 4.3] find the gradients from the arguments (replace the 0s below) and update the weight and bias parameters.
 
-        self.delta_weight_v_to_h += np.mean(inps*(trgs-preds),axis=0)
-        self.delta_bias_h += np.mean((trgs-preds),axis=0)
+        self.delta_weight_v_to_h += inps.T @ (trgs-preds)/inps.shape[0]
+        self.delta_bias_h += np.ones((1,inps.shape[0]))@(trgs-preds)/inps.shape[0]
 
         self.weight_v_to_h += self.learning_rate*self.delta_weight_v_to_h
-        self.bias_h += self.learning_rate*self.delta_bias_h
+        self.bias_h += self.learning_rate*self.delta_bias_h[0,:]
         
         return    
